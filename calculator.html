@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cost Estimator</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+</head>
+<body>
+    <nav>...</nav> <div class="container">
+        <h2>Upload STL for Instant Quote</h2>
+        <input type="file" id="stl_file" accept=".stl" class="file-input" />
+        <div id="loader" style="display:none;">Analyzing Mesh...</div>
+        <div id="result-card" class="card" style="display:none;">
+            <h3>Estimation Result</h3>
+            <p>Estimated Weight: <span id="weight">0</span>g</p>
+            <p>Estimated Price: <span id="price">₹0</span></p>
+            <small>*Excludes shipping and GST</small>
+        </div>
+    </div>
+
+    <script>
+        const materialDensity = 1.25; // PLA density g/cm3
+        const pricePerGram = 6; // Price in INR
+
+        document.getElementById('stl_file').addEventListener('change', function(e) {
+            document.getElementById('loader').style.display = 'block';
+            const reader = new FileReader();
+            reader.onload = function() {
+                const loader = new THREE.STLLoader();
+                const geometry = loader.parse(this.result);
+                const volume = calculateVolume(geometry); // in mm3
+                
+                const weightGrams = (volume / 1000) * materialDensity;
+                const totalPrice = weightGrams * pricePerGram;
+
+                document.getElementById('weight').innerText = weightGrams.toFixed(2);
+                document.getElementById('price').innerText = "₹" + totalPrice.toFixed(2);
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('result-card').style.display = 'block';
+            };
+            reader.readAsArrayBuffer(e.target.files[0]);
+        });
+
+        function calculateVolume(geometry) {
+            let volume = 0;
+            const pos = geometry.attributes.position.array;
+            for (let i = 0; i < pos.length; i += 9) {
+                let v1 = {x:pos[i], y:pos[i+1], z:pos[i+2]};
+                let v2 = {x:pos[i+3], y:pos[i+4], z:pos[i+5]};
+                let v3 = {x:pos[i+6], y:pos[i+7], z:pos[i+8]};
+                volume += (-v3.x*v2.y*v1.z + v2.x*v3.y*v1.z + v3.x*v1.y*v2.z - v1.x*v3.y*v2.z - v2.x*v1.y*v3.z + v1.x*v2.y*v3.z) / 6;
+            }
+            return Math.abs(volume);
+        }
+    </script>
+</body>
+</html>
