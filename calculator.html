@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cost Estimator | Logikos.in</title>
+    <title>Slicer Estimator | Logikos.in</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/STLLoader.js"></script>
@@ -21,152 +21,169 @@
     </nav>
 
     <div class="container">
-        <h2>3D Printing Cost Estimator</h2>
-        <div class="card">
-            <div class="controls-row">
-                <div>
-                    <label>1. Select Material</label>
+        <h2>Advanced Manufacturing Estimator</h2>
+        <div class="grid-2">
+            <div class="card">
+                <label>1. Material & Infill</label>
+                <div class="controls-row">
                     <select id="material" class="file-input">
                         <option value="1.24">PLA (1.24 g/cm³)</option>
                         <option value="1.04">ABS (1.04 g/cm³)</option>
                         <option value="1.27">PETG (1.27 g/cm³)</option>
                     </select>
+                    <div style="width:100%">
+                        <input type="range" id="infill" min="0" max="100" value="20" oninput="document.getElementById('infillVal').innerText = this.value">
+                        <span id="infillVal">20</span>% Infill
+                    </div>
                 </div>
-                <div>
-                    <label>2. Infill Density (%)</label>
-                    <input type="range" id="infill" min="0" max="100" value="20" oninput="document.getElementById('infillVal').innerText = this.value">
-                    <span id="infillVal">20</span>%
+
+                <label style="margin-top:15px;">2. Upload & Orient</label>
+                <input type="file" id="stl_file" accept=".stl" class="file-input" />
+                
+                <div id="rotation-controls" style="display:none; margin-top:10px; display:flex; gap:10px;">
+                    <button class="btn-small" onclick="rotateModel('x')">Rotate X</button>
+                    <button class="btn-small" onclick="rotateModel('y')">Rotate Y</button>
+                    <button class="btn-small" onclick="rotateModel('z')">Rotate Z</button>
+                </div>
+
+                <button id="calculateBtn" class="btn" style="width:100%; margin-top:20px; display:none; background:#28a745;">Calculate Total Cost</button>
+
+                <div id="result-card" style="display:none; margin-top:20px;">
+                    <table class="result-table">
+                        <tr><td>Model Weight</td><td style="text-align:right;"><span id="mWeight">0</span>g</td></tr>
+                        <tr><td>Support Weight</td><td style="text-align:right;"><span id="sWeight">0</span>g</td></tr>
+                        <tr class="total-row"><td>Total Price</td><td style="text-align:right;">₹<span id="fPrice">0</span></td></tr>
+                    </table>
                 </div>
             </div>
 
-            <label style="margin-top: 20px; display: block;">3. Upload STL File</label>
-            <input type="file" id="stl_file" accept=".stl" class="file-input" />
-            
-            <button id="calculateBtn" class="btn" style="width:100%; margin-top:15px; display:none; background:#28a745;">Calculate Quote</button>
-
-            <div id="loader" style="display:none; margin-top:15px; color:#007bff;">Analyzing geometry...</div>
-            
-            <div id="viewer"></div>
-
-            <div id="result-card" style="display:none;">
-                <table class="result-table">
-                    <tr><td>Raw Volume</td><td style="text-align:right;"><span id="volume">0</span> mm³</td></tr>
-                    <tr><td>Estimated Weight</td><td style="text-align:right;"><span id="weight">0</span> g</td></tr>
-                    <tr class="total-row"><td>Estimated Total</td><td style="text-align:right;">₹<span id="price">0</span></td></tr>
-                </table>
-                <p style="font-size: 0.85em; color: #666; margin-top: 15px;">*Price calculated at ₹7/gram. Final cost depends on print orientation and supports.</p>
+            <div class="card" style="padding:0; overflow:hidden; min-height:400px; position:relative;">
+                <div id="viewer" style="width:100%; height:100%; min-height:400px;"></div>
+                <div id="loader" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); display:none;">Processing...</div>
             </div>
         </div>
     </div>
 
     <script>
         const pricePerGram = 7;
-        const viewerEl = document.getElementById('viewer');
-        let scene, camera, renderer, controls, currentMesh, stlVolume = 0;
+        const supportDensityFactor = 0.15; // 15% density for supports
+        let scene, camera, renderer, controls, modelMesh, supportMesh, rawGeometry;
+        let stlVolume = 0, supportVolume = 0;
 
-        function setupViewer() {
+        function initScene() {
             if (scene) return;
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xf9f9f9);
-            
-            camera = new THREE.PerspectiveCamera(45, viewerEl.clientWidth / viewerEl.clientHeight, 0.1, 5000);
-            camera.position.set(250, 250, 250);
+            scene.background = new THREE.Color(0xf5f5f5);
+            camera = new THREE.PerspectiveCamera(45, 1, 0.1, 5000);
+            camera.position.set(200, 200, 200);
 
+            const container = document.getElementById('viewer');
             renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(viewerEl.clientWidth, viewerEl.clientHeight);
-            viewerEl.appendChild(renderer.domElement);
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
 
-            // Lighting
             scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.2));
-            const light = new THREE.DirectionalLight(0xffffff, 0.5);
-            light.position.set(1, 1, 1);
-            scene.add(light);
-
-            // Printer Base (Grid Helper)
-            const grid = new THREE.GridHelper(220, 22, 0x000000, 0xcccccc);
+            const grid = new THREE.GridHelper(220, 22, 0x888888, 0xcccccc);
             scene.add(grid);
 
             controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
             animate();
         }
 
         function animate() {
             requestAnimationFrame(animate);
             if (controls) controls.update();
-            if (renderer) renderer.render(scene, camera);
+            renderer.render(scene, camera);
+        }
+
+        function rotateModel(axis) {
+            if (!rawGeometry) return;
+            const q = new THREE.Quaternion();
+            if (axis === 'x') q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+            if (axis === 'y') q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
+            if (axis === 'z') q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 2);
+            rawGeometry.applyQuaternion(q);
+            updateVisuals();
+        }
+
+        function updateVisuals() {
+            if (modelMesh) scene.remove(modelMesh);
+            if (supportMesh) scene.remove(supportMesh);
+
+            rawGeometry.computeBoundingBox();
+            const center = new THREE.Vector3();
+            rawGeometry.boundingBox.getCenter(center);
+            rawGeometry.translate(-center.x, -rawGeometry.boundingBox.min.y, -center.z);
+
+            const mat = new THREE.MeshStandardMaterial({ color: 0x007bff, metalness: 0.3, roughness: 0.5 });
+            modelMesh = new THREE.Mesh(rawGeometry, mat);
+            scene.add(modelMesh);
+
+            generateSupports();
+        }
+
+        function generateSupports() {
+            const pos = rawGeometry.attributes.position.array;
+            const norm = rawGeometry.attributes.normal.array;
+            const supportGeom = new THREE.BoxGeometry(1, 1, 1);
+            const supportGroup = new THREE.Group();
+            const supportMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.4 });
+            
+            supportVolume = 0;
+            // Sampling triangles for performance
+            for (let i = 0; i < norm.length; i += 18) { // Step by 6 vertices (2 triangles)
+                if (norm[i + 2] < -0.6) { // Downward facing
+                    const z = (pos[i+2] + pos[i+5] + pos[i+8]) / 3;
+                    if (z > 1) {
+                        const pillar = new THREE.Mesh(new THREE.BoxGeometry(2, 2, z), supportMat);
+                        pillar.position.set(pos[i], pos[i+1], z/2);
+                        supportGroup.add(pillar);
+                        supportVolume += (4 * z); // Area 4mm * height
+                    }
+                }
+            }
+            supportMesh = supportGroup;
+            scene.add(supportMesh);
         }
 
         document.getElementById('stl_file').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
-
             document.getElementById('loader').style.display = 'block';
-            document.getElementById('result-card').style.display = 'none';
-
             const reader = new FileReader();
             reader.onload = function() {
+                initScene();
                 const loader = new THREE.STLLoader();
-                const geometry = loader.parse(this.result);
-                
-                viewerEl.style.display = 'block';
+                rawGeometry = loader.parse(this.result);
+                updateVisuals();
+                document.getElementById('rotation-controls').style.display = 'flex';
                 document.getElementById('calculateBtn').style.display = 'block';
-                setupViewer();
-
-                if (currentMesh) scene.remove(currentMesh);
-
-                // Center and position model on the grid
-                geometry.computeBoundingBox();
-                const center = new THREE.Vector3();
-                geometry.boundingBox.getCenter(center);
-                geometry.translate(-center.x, -geometry.boundingBox.min.y, -center.z);
-
-                const material = new THREE.MeshStandardMaterial({ color: 0x007bff, metalness: 0.2, roughness: 0.5 });
-                currentMesh = new THREE.Mesh(geometry, material);
-                scene.add(currentMesh);
-
-                // Auto-zoom to model
-                const size = new THREE.Vector3();
-                geometry.boundingBox.getSize(size);
-                const maxDim = Math.max(size.x, size.y, size.z);
-                camera.position.set(maxDim * 2, maxDim * 2, maxDim * 2);
-                controls.update();
-
-                stlVolume = calculateVolume(geometry);
                 document.getElementById('loader').style.display = 'none';
+                
+                // Calculate Raw Volume once
+                stlVolume = 0;
+                const pos = rawGeometry.attributes.position.array;
+                for (let i = 0; i < pos.length; i += 9) {
+                    let v1={x:pos[i],y:pos[i+1],z:pos[i+2]}, v2={x:pos[i+3],y:pos[i+4],z:pos[i+5]}, v3={x:pos[i+6],y:pos[i+7],z:pos[i+8]};
+                    stlVolume += (-v3.x*v2.y*v1.z + v2.x*v3.y*v1.z + v3.x*v1.y*v2.z - v1.x*v3.y*v2.z - v2.x*v1.y*v3.z + v1.x*v2.y*v3.z) / 6;
+                }
+                stlVolume = Math.abs(stlVolume);
             };
             reader.readAsArrayBuffer(file);
         });
 
         document.getElementById('calculateBtn').addEventListener('click', function() {
-            if (stlVolume === 0) return;
-            
             const density = parseFloat(document.getElementById('material').value);
             const infill = parseFloat(document.getElementById('infill').value) / 100;
             
-            // Math: Weight = Volume * Density * (Infill adjustment)
-            // Adjusting volume based on 20% shell and 80% variable infill
-            const effectiveVolume = (stlVolume * 0.2) + (stlVolume * 0.8 * infill);
-            const weightGrams = (effectiveVolume / 1000) * density; 
-            const totalPrice = weightGrams * pricePerGram;
+            const modelWeight = ((stlVolume * 0.2) + (stlVolume * 0.8 * infill)) / 1000 * density;
+            const supWeight = (supportVolume * supportDensityFactor) / 1000 * density;
             
-            document.getElementById('volume').innerText = Math.round(stlVolume);
-            document.getElementById('weight').innerText = weightGrams.toFixed(2);
-            document.getElementById('price').innerText = totalPrice.toFixed(2);
+            document.getElementById('mWeight').innerText = modelWeight.toFixed(2);
+            document.getElementById('sWeight').innerText = supWeight.toFixed(2);
+            document.getElementById('fPrice').innerText = ((modelWeight + supWeight) * pricePerGram).toFixed(2);
             document.getElementById('result-card').style.display = 'block';
         });
-
-        function calculateVolume(geometry) {
-            let volume = 0;
-            const pos = geometry.attributes.position.array;
-            for (let i = 0; i < pos.length; i += 9) {
-                let v1 = {x:pos[i], y:pos[i+1], z:pos[i+2]};
-                let v2 = {x:pos[i+3], y:pos[i+4], z:pos[i+5]};
-                let v3 = {x:pos[i+6], y:pos[i+7], z:pos[i+8]};
-                volume += (-v3.x*v2.y*v1.z + v2.x*v3.y*v1.z + v3.x*v1.y*v2.z - v1.x*v3.y*v2.z - v2.x*v1.y*v3.z + v1.x*v2.y*v3.z) / 6;
-            }
-            return Math.abs(volume);
-        }
     </script>
 </body>
 </html>
