@@ -1,3 +1,4 @@
+/* --- YOUR ORIGINAL STYLES (DO NOT REMOVE) --- */
 body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f9f9f9; color: #333; line-height: 1.6; }
 nav { background: #000; color: white; display: flex; justify-content: space-between; padding: 15px 8%; align-items: center; }
 nav ul { list-style: none; display: flex; margin: 0; }
@@ -14,5 +15,58 @@ nav ul li a { color: #fff; text-decoration: none; font-size: 14px; text-transfor
 .price { font-size: 1.5rem; font-weight: bold; color: #222; }
 .btn { background: #000; color: white; padding: 10px 25px; text-decoration: none; border: none; cursor: pointer; display: inline-block; }
 .btn:hover { background: #444; }
-.file-input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
+.file-input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; box-sizing: border-box; }
 hr { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
+
+/* --- NEW CALCULATOR & VIEWER ADDITIONS --- */
+.controls-row { 
+    display: flex; 
+    gap: 20px; 
+    flex-wrap: wrap; 
+    margin-top: 15px; 
+}
+
+.controls-row > div { 
+    flex: 1; 
+    min-width: 200px; 
+}
+
+#viewer { 
+    width: 100%; 
+    height: 400px; 
+    background: #eee; /* Light gray to show area before model loads */
+    border: 1px solid #ddd; 
+    margin-top: 20px; 
+    border-radius: 4px;
+    display: none; /* Controlled by JavaScript */
+}
+
+.result-table { 
+    width: 100%; 
+    margin-top: 20px; 
+    border-collapse: collapse; 
+}
+
+.result-table td { 
+    padding: 12px 0; 
+    border-bottom: 1px solid #eee; 
+}
+
+.total-row { 
+    font-weight: bold; 
+    font-size: 1.4rem; 
+    color: #28a745; 
+}
+
+input[type="range"] {
+    width: 100%;
+    margin: 10px 0;
+    cursor: pointer;
+}
+
+label {
+    font-weight: bold;
+    font-size: 14px;
+    display: block;
+    margin-bottom: 5px;
+}
