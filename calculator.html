@@ -65,125 +65,139 @@
     </div>
 
     <script>
-        const pricePerGram = 7;
-        const supportDensityFactor = 0.15; // 15% density for supports
-        let scene, camera, renderer, controls, modelMesh, supportMesh, rawGeometry;
-        let stlVolume = 0, supportVolume = 0;
+    const pricePerGram = 7;
+    const supportDensityFactor = 0.15; 
+    let scene, camera, renderer, controls, modelMesh, supportMesh, rawGeometry;
+    let stlVolume = 0, supportVolume = 0;
 
-        function initScene() {
-            if (scene) return;
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xf5f5f5);
-            camera = new THREE.PerspectiveCamera(45, 1, 0.1, 5000);
-            camera.position.set(200, 200, 200);
+    function initScene() {
+        if (scene) return;
+        
+        const container = document.getElementById('viewer');
+        const width = container.clientWidth;
+        const height = container.clientHeight || 450; // Fallback height
 
-            const container = document.getElementById('viewer');
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(container.clientWidth, container.clientHeight);
-            container.appendChild(renderer.domElement);
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xf5f5f5);
+        
+        camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 5000);
+        camera.position.set(200, 200, 200);
 
-            scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.2));
-            const grid = new THREE.GridHelper(220, 22, 0x888888, 0xcccccc);
-            scene.add(grid);
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(width, height);
+        container.appendChild(renderer.domElement);
 
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            animate();
-        }
+        scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.2));
+        const grid = new THREE.GridHelper(220, 22, 0x000000, 0xcccccc);
+        // Rotate grid to be on XZ plane
+        scene.add(grid);
 
-        function animate() {
-            requestAnimationFrame(animate);
-            if (controls) controls.update();
-            renderer.render(scene, camera);
-        }
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        animate();
+    }
 
-        function rotateModel(axis) {
-            if (!rawGeometry) return;
-            const q = new THREE.Quaternion();
-            if (axis === 'x') q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2);
-            if (axis === 'y') q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
-            if (axis === 'z') q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 2);
-            rawGeometry.applyQuaternion(q);
-            updateVisuals();
-        }
+    function animate() {
+        requestAnimationFrame(animate);
+        if (controls) controls.update();
+        if (renderer) renderer.render(scene, camera);
+    }
 
-        function updateVisuals() {
-            if (modelMesh) scene.remove(modelMesh);
-            if (supportMesh) scene.remove(supportMesh);
+    function rotateModel(axis) {
+        if (!rawGeometry) return;
+        if (axis === 'x') rawGeometry.rotateX(Math.PI / 2);
+        if (axis === 'y') rawGeometry.rotateY(Math.PI / 2);
+        if (axis === 'z') rawGeometry.rotateZ(Math.PI / 2);
+        updateVisuals();
+    }
 
-            rawGeometry.computeBoundingBox();
-            const center = new THREE.Vector3();
-            rawGeometry.boundingBox.getCenter(center);
-            rawGeometry.translate(-center.x, -rawGeometry.boundingBox.min.y, -center.z);
+    function updateVisuals() {
+        if (modelMesh) scene.remove(modelMesh);
+        if (supportMesh) scene.remove(supportMesh);
 
-            const mat = new THREE.MeshStandardMaterial({ color: 0x007bff, metalness: 0.3, roughness: 0.5 });
-            modelMesh = new THREE.Mesh(rawGeometry, mat);
-            scene.add(modelMesh);
+        rawGeometry.computeBoundingBox();
+        const center = new THREE.Vector3();
+        rawGeometry.boundingBox.getCenter(center);
+        
+        // Always snap to grid center and sit on floor
+        rawGeometry.translate(-center.x, -rawGeometry.boundingBox.min.y, -center.z);
 
-            generateSupports();
-        }
+        const mat = new THREE.MeshStandardMaterial({ color: 0x007bff, metalness: 0.3, roughness: 0.5 });
+        modelMesh = new THREE.Mesh(rawGeometry, mat);
+        scene.add(modelMesh);
 
-        function generateSupports() {
-            const pos = rawGeometry.attributes.position.array;
-            const norm = rawGeometry.attributes.normal.array;
-            const supportGeom = new THREE.BoxGeometry(1, 1, 1);
-            const supportGroup = new THREE.Group();
-            const supportMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.4 });
-            
-            supportVolume = 0;
-            // Sampling triangles for performance
-            for (let i = 0; i < norm.length; i += 18) { // Step by 6 vertices (2 triangles)
-                if (norm[i + 2] < -0.6) { // Downward facing
-                    const z = (pos[i+2] + pos[i+5] + pos[i+8]) / 3;
-                    if (z > 1) {
-                        const pillar = new THREE.Mesh(new THREE.BoxGeometry(2, 2, z), supportMat);
-                        pillar.position.set(pos[i], pos[i+1], z/2);
-                        supportGroup.add(pillar);
-                        supportVolume += (4 * z); // Area 4mm * height
-                    }
+        generateSupports();
+    }
+
+    function generateSupports() {
+        const pos = rawGeometry.attributes.position.array;
+        const norm = rawGeometry.attributes.normal.array;
+        const supportGroup = new THREE.Group();
+        const supportMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.3 });
+        
+        supportVolume = 0;
+        // Analyze faces for overhangs
+        for (let i = 0; i < norm.length; i += 18) { 
+            // If the normal points significantly downwards
+            if (norm[i + 1] < -0.5) { 
+                const x = (pos[i] + pos[i+3] + pos[i+6]) / 3;
+                const y = (pos[i+1] + pos[i+4] + pos[i+7]) / 3;
+                const z = (pos[i+2] + pos[i+5] + pos[i+8]) / 3;
+                
+                if (y > 0.5) {
+                    const pillarGeom = new THREE.BoxGeometry(2, y, 2);
+                    const pillar = new THREE.Mesh(pillarGeom, supportMat);
+                    pillar.position.set(x, y/2, z);
+                    supportGroup.add(pillar);
+                    supportVolume += (4 * y); 
                 }
             }
-            supportMesh = supportGroup;
-            scene.add(supportMesh);
         }
+        supportMesh = supportGroup;
+        scene.add(supportMesh);
+    }
 
-        document.getElementById('stl_file').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            document.getElementById('loader').style.display = 'block';
-            const reader = new FileReader();
-            reader.onload = function() {
-                initScene();
-                const loader = new THREE.STLLoader();
-                rawGeometry = loader.parse(this.result);
-                updateVisuals();
-                document.getElementById('rotation-controls').style.display = 'flex';
-                document.getElementById('calculateBtn').style.display = 'block';
-                document.getElementById('loader').style.display = 'none';
-                
-                // Calculate Raw Volume once
-                stlVolume = 0;
-                const pos = rawGeometry.attributes.position.array;
-                for (let i = 0; i < pos.length; i += 9) {
-                    let v1={x:pos[i],y:pos[i+1],z:pos[i+2]}, v2={x:pos[i+3],y:pos[i+4],z:pos[i+5]}, v3={x:pos[i+6],y:pos[i+7],z:pos[i+8]};
-                    stlVolume += (-v3.x*v2.y*v1.z + v2.x*v3.y*v1.z + v3.x*v1.y*v2.z - v1.x*v3.y*v2.z - v2.x*v1.y*v3.z + v1.x*v2.y*v3.z) / 6;
-                }
-                stlVolume = Math.abs(stlVolume);
-            };
-            reader.readAsArrayBuffer(file);
-        });
+    document.getElementById('stl_file').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        document.getElementById('loader').style.display = 'block';
+        const reader = new FileReader();
+        reader.onload = function() {
+            initScene();
+            const loader = new THREE.STLLoader();
+            rawGeometry = loader.parse(this.result);
+            
+            updateVisuals();
+            
+            document.getElementById('rotation-controls').style.display = 'flex';
+            document.getElementById('calculateBtn').style.display = 'block';
+            document.getElementById('loader').style.display = 'none';
+            
+            // Calculate basic volume
+            stlVolume = 0;
+            const pos = rawGeometry.attributes.position.array;
+            for (let i = 0; i < pos.length; i += 9) {
+                let v1={x:pos[i],y:pos[i+1],z:pos[i+2]}, v2={x:pos[i+3],y:pos[i+4],z:pos[i+5]}, v3={x:pos[i+6],y:pos[i+7],z:pos[i+8]};
+                stlVolume += (-v3.x*v2.y*v1.z + v2.x*v3.y*v1.z + v3.x*v1.y*v2.z - v1.x*v3.y*v2.z - v2.x*v1.y*v3.z + v1.x*v2.y*v3.z) / 6;
+            }
+            stlVolume = Math.abs(stlVolume);
+        };
+        reader.readAsArrayBuffer(file);
+    });
 
-        document.getElementById('calculateBtn').addEventListener('click', function() {
-            const density = parseFloat(document.getElementById('material').value);
-            const infill = parseFloat(document.getElementById('infill').value) / 100;
-            
-            const modelWeight = ((stlVolume * 0.2) + (stlVolume * 0.8 * infill)) / 1000 * density;
-            const supWeight = (supportVolume * supportDensityFactor) / 1000 * density;
-            
-            document.getElementById('mWeight').innerText = modelWeight.toFixed(2);
-            document.getElementById('sWeight').innerText = supWeight.toFixed(2);
-            document.getElementById('fPrice').innerText = ((modelWeight + supWeight) * pricePerGram).toFixed(2);
-            document.getElementById('result-card').style.display = 'block';
-        });
-    </script>
+    document.getElementById('calculateBtn').addEventListener('click', function() {
+        const density = parseFloat(document.getElementById('material').value);
+        const infill = parseFloat(document.getElementById('infill').value) / 100;
+        
+        const modelWeight = ((stlVolume * 0.2) + (stlVolume * 0.8 * infill)) / 1000 * density;
+        const supWeight = (supportVolume * supportDensityFactor) / 1000 * density;
+        
+        document.getElementById('mWeight').innerText = modelWeight.toFixed(2);
+        document.getElementById('sWeight').innerText = supWeight.toFixed(2);
+        document.getElementById('fPrice').innerText = ((modelWeight + supWeight) * pricePerGram).toFixed(2);
+        document.getElementById('result-card').style.display = 'block';
+    });
+</script>
 </body>
 </html>
