@@ -2,226 +2,178 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cost Estimator | Logikos.in</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/STLLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
     <style>
-        /* Minimal inline styles for the controls and viewer */
-        .controls-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-        .controls-row > * { flex: 1 1 180px; min-width: 120px; }
-        #viewer { width:100%; height:360px; background:#f5f5f5; border:1px solid #ddd; margin-top:12px; }
-        label { font-weight:600; display:block; margin-bottom:6px; }
-        .small { font-size:0.9em; color:#666; }
+        .controls-row { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 15px; }
+        .controls-row > div { flex: 1; min-width: 200px; }
+        /* Ensure the viewer has a height before the script runs */
+        #viewer { 
+            width: 100%; 
+            height: 400px; 
+            background: #f9f9f9; 
+            border: 1px solid #ddd; 
+            margin-top: 20px; 
+            border-radius: 8px;
+            display: none; /* Hidden until file is uploaded */
+        }
+        .result-table { width: 100%; margin-top: 20px; border-collapse: collapse; }
+        .result-table td { padding: 10px; border-bottom: 1px solid #eee; }
+        .total-row { font-weight: bold; font-size: 1.2em; color: #28a745; background: #f0fff0; }
     </style>
 </head>
 <body>
-    <nav><div class="logo">LOGIKOS.IN</div><ul><li><a href="index.html">Home</a></li><li><a href="services.html">Services</a></li><li><a href="shop.html">Shop</a></li><li><a href="calculator.html">Cost Estimator</a></li></ul></nav>
+    <nav>
+        <div class="logo">LOGIKOS.IN</div>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="services.html">Services</a></li>
+            <li><a href="shop.html">Shop</a></li>
+            <li><a href="calculator.html">Cost Estimator</a></li>
+        </ul>
+    </nav>
 
-    <div class="container" style="max-width: 900px;">
+    <div class="container">
         <h2>3D Printing Cost Estimator</h2>
         <div class="card">
-            <label>1. Select Material:</label>
-            <select id="material" class="file-input" style="margin-bottom: 12px;">
-                <option value="1.24">PLA (1.24 g/cm³)</option>
-                <option value="1.04">ABS (1.04 g/cm³)</option>
-                <option value="1.27">PETG (1.27 g/cm³)</option>
-                <option value="1.20">Nylon (1.20 g/cm³)</option>
-                <option value="1.10">TPU (1.10 g/cm³)</option>
-            </select>
-
             <div class="controls-row">
                 <div>
-                    <label>2. Upload STL File:</label>
-                    <input type="file" id="stl_file" accept=".stl" class="file-input" />
+                    <label>1. Material Type</label>
+                    <select id="material" class="file-input">
+                        <option value="1.24">PLA (1.24 g/cm³)</option>
+                        <option value="1.04">ABS (1.04 g/cm³)</option>
+                        <option value="1.27">PETG (1.27 g/cm³)</option>
+                    </select>
                 </div>
-
                 <div>
-                    <label>Infill %:</label>
-                    <input id="infill" type="range" min="0" max="100" value="20" />
-                    <div class="small"><span id="infill-val">20</span>% (adjusts effective material usage)</div>
+                    <label>2. Infill Density (%)</label>
+                    <input type="range" id="infill" min="0" max="100" value="20" oninput="document.getElementById('infillVal').innerText = this.value">
+                    <span id="infillVal">20</span>%
                 </div>
             </div>
 
-            <div id="loader" style="display:none; margin-top:10px; color:#007bff;">Processing Mesh...</div>
-            <div id="error" style="display:none; margin-top:10px; color:#d9534f;"></div>
+            <label style="margin-top: 20px; display: block;">3. Upload STL File</label>
+            <input type="file" id="stl_file" accept=".stl" class="file-input" />
 
-            <div id="viewer" style="display:none;"></div>
+            <div id="loader" style="display:none; margin-top:15px; color:#007bff;">Analyzing geometry...</div>
+            
+            <div id="viewer"></div>
 
-            <div id="result-card" style="display:none; margin-top:20px; border-top:1px solid #eee; padding-top:20px;">
-                <p><strong>Raw Volume:</strong> <span id="volume">0</span> mm³</p>
-                <p><strong>Effective Volume (infill):</strong> <span id="effvolume">0</span> mm³</p>
-                <p><strong>Estimated Weight:</strong> <span id="weight">0</span> g</p>
-                <h3 style="color: #28a745;">Estimated Cost: ₹<span id="price">0</span></h3>
-                <p class="small">Price-per-gram is fixed at ₹7. Adjust infill % and material to see changes.</p>
+            <div id="result-card" style="display:none;">
+                <table class="result-table">
+                    <tr><td>Net Model Volume</td><td style="text-align:right;"><span id="volume">0</span> mm³</td></tr>
+                    <tr><td>Calculated Weight</td><td style="text-align:right;"><span id="weight">0</span> g</td></tr>
+                    <tr class="total-row"><td>Estimated Total</td><td style="text-align:right;">₹<span id="price">0</span></td></tr>
+                </table>
+                <p style="font-size: 0.85em; color: #666; margin-top: 10px;">*Based on standard ₹7/gram rate. Final price subject to orientation and support requirements.</p>
             </div>
         </div>
     </div>
 
     <script>
-        // Fixed price per gram (INR)
         const pricePerGram = 7;
-
-        const stlInput = document.getElementById('stl_file');
-        const loaderEl = document.getElementById('loader');
-        const errorEl = document.getElementById('error');
-        const resultCard = document.getElementById('result-card');
         const viewerEl = document.getElementById('viewer');
-
-        const volumeEl = document.getElementById('volume');
-        const effVolumeEl = document.getElementById('effvolume');
-        const weightEl = document.getElementById('weight');
-        const priceEl = document.getElementById('price');
-
-        const materialSelect = document.getElementById('material');
-        const infillRange = document.getElementById('infill');
-        const infillVal = document.getElementById('infill-val');
-
-        infillRange.addEventListener('input', () => infillVal.innerText = infillRange.value);
-
-        // ThreeJS preview setup (created when needed)
         let scene, camera, renderer, controls, currentMesh;
+
         function setupViewer() {
             if (scene) return;
             scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(45, viewerEl.clientWidth / viewerEl.clientHeight, 0.1, 10000);
-            camera.position.set(100, 100, 200);
+            camera = new THREE.PerspectiveCamera(45, viewerEl.clientWidth / viewerEl.clientHeight, 0.1, 1000);
+            camera.position.set(150, 150, 150);
+
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(viewerEl.clientWidth, viewerEl.clientHeight);
-            renderer.setClearColor(0xffffff, 0);
+            renderer.setClearColor(0x000000, 0); // Transparent background
             viewerEl.appendChild(renderer.domElement);
 
-            const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
-            scene.add(hemi);
-            const dir = new THREE.DirectionalLight(0xffffff, 0.8);
-            dir.position.set(1, 1, 1).multiplyScalar(1000);
-            scene.add(dir);
+            scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.2));
+            const light = new THREE.DirectionalLight(0xffffff, 0.8);
+            light.position.set(1, 1, 1);
+            scene.add(light);
 
+            // Accessing OrbitControls from the non-module script tag
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
-
-            window.addEventListener('resize', onViewerResize);
             animate();
         }
-        function onViewerResize() {
-            if (!renderer) return;
-            renderer.setSize(viewerEl.clientWidth, viewerEl.clientHeight);
-            camera.aspect = viewerEl.clientWidth / viewerEl.clientHeight;
-            camera.updateProjectionMatrix();
-        }
+
         function animate() {
             requestAnimationFrame(animate);
             if (controls) controls.update();
             if (renderer) renderer.render(scene, camera);
         }
-        function renderMesh(geometry) {
-            setupViewer();
-            if (currentMesh) {
-                scene.remove(currentMesh);
-                currentMesh.geometry.dispose();
-                currentMesh.material.dispose();
-                currentMesh = null;
-            }
-            // Compute bounding and center geometry
-            geometry.computeBoundingBox();
-            geometry.computeVertexNormals();
-            const bbox = geometry.boundingBox;
-            const center = new THREE.Vector3();
-            bbox.getCenter(center);
-            geometry.translate(-center.x, -center.y, -center.z);
 
-            const material = new THREE.MeshStandardMaterial({ color: 0x7db9e8, metalness: 0.1, roughness: 0.7 });
-            currentMesh = new THREE.Mesh(geometry, material);
-            scene.add(currentMesh);
-
-            // adjust camera distance
-            const size = new THREE.Vector3();
-            bbox.getSize(size);
-            const maxDim = Math.max(size.x, size.y, size.z);
-            const fov = camera.fov * (Math.PI / 180);
-            const cameraDist = Math.abs(maxDim / (2 * Math.tan(fov / 2))) * 1.6;
-            camera.position.set(cameraDist, cameraDist, cameraDist);
-            camera.lookAt(new THREE.Vector3(0, 0, 0));
-            controls.update();
-            viewerEl.style.display = 'block';
-        }
-
-        // File handling
-        stlInput.addEventListener('change', function(e) {
+        document.getElementById('stl_file').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
-            errorEl.style.display = 'none';
-            loaderEl.style.display = 'block';
-            resultCard.style.display = 'none';
-            viewerEl.style.display = 'none';
 
+            document.getElementById('loader').style.display = 'block';
             const reader = new FileReader();
             reader.onload = function() {
-                try {
-                    const loader = new THREE.STLLoader();
-                    const arrayBuffer = this.result;
-                    let geometry = loader.parse(arrayBuffer);
+                const loader = new THREE.STLLoader();
+                const geometry = loader.parse(this.result);
+                
+                // Show viewer and setup if first time
+                viewerEl.style.display = 'block';
+                setupViewer();
 
-                    // Calculate raw volume (mm^3)
-                    const rawVolume = calculateVolume(geometry);
-                    const infill = parseFloat(infillRange.value) || 0;
+                // Clear previous mesh
+                if (currentMesh) scene.remove(currentMesh);
 
-                    // Effective volume: infill fraction only (user removed overhead)
-                    const effectiveVolume = rawVolume * (infill / 100);
+                // Center and Scale Geometry
+                geometry.computeBoundingSphere();
+                const center = geometry.boundingSphere.center;
+                geometry.translate(-center.x, -center.y, -center.z);
 
-                    const density = parseFloat(materialSelect.value) || 1.24; // g/cm3
-                    const massGrams = (effectiveVolume / 1000) * density; // mm^3 -> cm^3 -> grams
+                const material = new THREE.MeshStandardMaterial({ color: 0x007bff, metalness: 0.3, roughness: 0.5 });
+                currentMesh = new THREE.Mesh(geometry, material);
+                scene.add(currentMesh);
 
-                    const totalPrice = massGrams * pricePerGram;
+                // Position camera based on model size
+                const radius = geometry.boundingSphere.radius;
+                camera.position.set(radius * 2, radius * 2, radius * 2);
+                camera.lookAt(0, 0, 0);
 
-                    // Show values
-                    volumeEl.innerText = Math.round(rawVolume);
-                    effVolumeEl.innerText = Math.round(effectiveVolume);
-                    weightEl.innerText = massGrams.toFixed(2);
-                    priceEl.innerText = totalPrice.toFixed(2);
-
-                    loaderEl.style.display = 'none';
-                    resultCard.style.display = 'block';
-
-                    // Render preview (use original geometry for preview)
-                    renderMesh(geometry);
-
-                } catch (err) {
-                    loaderEl.style.display = 'none';
-                    errorEl.style.display = 'block';
-                    errorEl.innerText = 'Error processing STL: ' + (err.message || err);
-                    console.error(err);
-                }
-            };
-            reader.onerror = function(err) {
-                loaderEl.style.display = 'none';
-                errorEl.style.display = 'block';
-                errorEl.innerText = 'Failed to read file: ' + err;
+                // Math
+                const vol = calculateVolume(geometry);
+                const density = parseFloat(document.getElementById('material').value);
+                const infill = parseFloat(document.getElementById('infill').value) / 100;
+                
+                // Simple logic: assume shell + infill averages to this weight
+                const effectiveWeight = (vol / 1000) * density * (0.2 + (0.8 * infill)); 
+                
+                document.getElementById('volume').innerText = Math.round(vol);
+                document.getElementById('weight').innerText = effectiveWeight.toFixed(2);
+                document.getElementById('price').innerText = (effectiveWeight * pricePerGram).toFixed(2);
+                
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('result-card').style.display = 'block';
             };
             reader.readAsArrayBuffer(file);
         });
 
-        // Volume calculation for triangular mesh (BufferGeometry with position attribute)
-        // Returns absolute volume in cubic millimeters (mm^3)
         function calculateVolume(geometry) {
-            const geom = geometry.isBufferGeometry ? geometry : new THREE.BufferGeometry().fromGeometry(geometry);
-            const posAttr = geom.attributes.position;
-            if (!posAttr) return 0;
-            const pos = posAttr.array;
             let volume = 0;
+            const pos = geometry.attributes.position.array;
             for (let i = 0; i < pos.length; i += 9) {
-                const v1x = pos[i], v1y = pos[i+1], v1z = pos[i+2];
-                const v2x = pos[i+3], v2y = pos[i+4], v2z = pos[i+5];
-                const v3x = pos[i+6], v3y = pos[i+7], v3z = pos[i+8];
-
-                volume += (-v3x*v2y*v1z + v2x*v3y*v1z + v3x*v1y*v2z - v1x*v3y*v2z - v2x*v1y*v3z + v1x*v2y*v3z) / 6;
+                let v1 = {x:pos[i], y:pos[i+1], z:pos[i+2]};
+                let v2 = {x:pos[i+3], y:pos[i+4], z:pos[i+5]};
+                let v3 = {x:pos[i+6], y:pos[i+7], z:pos[i+8]};
+                volume += (-v3.x*v2.y*v1.z + v2.x*v3.y*v1.z + v3.x*v1.y*v2.z - v1.x*v3.y*v2.z - v2.x*v1.y*v3.z + v1.x*v2.y*v3.z) / 6;
             }
             return Math.abs(volume);
         }
 
-        // Resize viewer if container changes
-        window.addEventListener('resize', onViewerResize);
+        window.addEventListener('resize', () => {
+            if (!renderer) return;
+            camera.aspect = viewerEl.clientWidth / viewerEl.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(viewerEl.clientWidth, viewerEl.clientHeight);
+        });
     </script>
 </body>
 </html>
