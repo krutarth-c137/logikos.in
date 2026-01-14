@@ -1,46 +1,87 @@
-/* --- YOUR ORIGINAL STYLES (DO NOT REMOVE) --- */
-body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f9f9f9; color: #333; line-height: 1.6; }
-nav { background: #000; color: white; display: flex; justify-content: space-between; padding: 15px 8%; align-items: center; }
+/* --- Core Site Styles --- */
+body { 
+    font-family: 'Segoe UI', sans-serif; 
+    margin: 0; 
+    background: #f9f9f9; 
+    color: #333; 
+    line-height: 1.6; 
+}
+
+nav { 
+    background: #000; 
+    color: white; 
+    display: flex; 
+    justify-content: space-between; 
+    padding: 15px 8%; 
+    align-items: center; 
+}
+
 nav ul { list-style: none; display: flex; margin: 0; }
 nav ul li { margin-left: 20px; }
 nav ul li a { color: #fff; text-decoration: none; font-size: 14px; text-transform: uppercase; }
 .logo { font-weight: bold; font-size: 20px; letter-spacing: 2px; }
-.hero { background: #111; color: white; padding: 80px 8%; text-align: center; }
-.tagline { font-style: italic; color: #aaa; font-size: 1.2rem; }
-.container { padding: 40px 8%; max-width: 1100px; margin: auto; }
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-.card { background: white; padding: 25px; border-radius: 4px; border: 1px solid #eee; }
-.product-card { background: white; padding: 20px; text-align: center; border: 1px solid #eee; }
-.price { font-size: 1.5rem; font-weight: bold; color: #222; }
-.btn { background: #000; color: white; padding: 10px 25px; text-decoration: none; border: none; cursor: pointer; display: inline-block; }
-.btn:hover { background: #444; }
-.file-input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; box-sizing: border-box; }
-hr { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
 
-/* --- NEW CALCULATOR & VIEWER ADDITIONS --- */
+.container { padding: 40px 8%; max-width: 1100px; margin: auto; }
+.card { background: white; padding: 25px; border-radius: 4px; border: 1px solid #eee; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+
+/* --- Calculator Grid & Inputs --- */
 .controls-row { 
     display: flex; 
     gap: 20px; 
     flex-wrap: wrap; 
-    margin-top: 15px; 
+    margin-bottom: 20px; 
 }
 
-.controls-row > div { 
-    flex: 1; 
-    min-width: 200px; 
+.controls-row > div { flex: 1; min-width: 200px; }
+
+label { 
+    font-weight: bold; 
+    font-size: 14px; 
+    display: block; 
+    margin-bottom: 5px; 
 }
 
+.file-input { 
+    width: 100%; 
+    padding: 10px; 
+    border: 1px solid #ccc; 
+    border-radius: 4px; 
+    font-size: 16px; 
+    box-sizing: border-box; 
+    background: #fff;
+}
+
+input[type="range"] { 
+    width: 100%; 
+    cursor: pointer; 
+}
+
+/* --- Buttons --- */
+.btn { 
+    background: #000; 
+    color: white; 
+    padding: 12px 25px; 
+    border: none; 
+    cursor: pointer; 
+    font-size: 16px; 
+    font-weight: bold;
+    border-radius: 4px;
+    transition: 0.3s;
+}
+
+.btn:hover { background: #444; }
+
+/* --- 3D Viewer --- */
 #viewer { 
     width: 100%; 
     height: 400px; 
-    background: #eee; /* Light gray to show area before model loads */
+    background: #eee; 
     border: 1px solid #ddd; 
     margin-top: 20px; 
-    border-radius: 4px;
-    display: none; /* Controlled by JavaScript */
+    display: none; 
 }
 
+/* --- Result Table --- */
 .result-table { 
     width: 100%; 
     margin-top: 20px; 
@@ -54,19 +95,6 @@ hr { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
 
 .total-row { 
     font-weight: bold; 
-    font-size: 1.4rem; 
+    font-size: 1.5rem; 
     color: #28a745; 
-}
-
-input[type="range"] {
-    width: 100%;
-    margin: 10px 0;
-    cursor: pointer;
-}
-
-label {
-    font-weight: bold;
-    font-size: 14px;
-    display: block;
-    margin-bottom: 5px;
 }
