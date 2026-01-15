@@ -91,29 +91,54 @@
         });
 
         document.getElementById('leadForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Prepare Data for Google Form
-            const email = document.getElementById('leadEmail').value;
-            const city = document.getElementById('leadCity').value;
-            const phone = document.getElementById('leadPhone').value;
+    e.preventDefault();
+    
+    // 1. Get Values
+    const email = document.getElementById('leadEmail').value;
+    const city = document.getElementById('leadCity').value;
+    const phone = document.getElementById('leadPhone').value;
 
-            const formData = new FormData();
-            formData.append('entry.1045781291', email);
-            formData.append('entry.1065046570', city);
-            formData.append('entry.1166974658', phone);
+    // 2. The CORRECT Endpoint (Ending in /formResponse)
+    const ACTION_URL = "https://docs.google.com/forms/d/e/1FAIpQLSf--2IT6gQOgpxfTGaslrxffKGPMsCQbkrt8GCFyn_y2GCZOQ/formResponse";
 
-            // Silent background submission
-            fetch(GOOGLE_FORM_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: formData
-            });
+    // 3. Create a hidden submission (The Iframe Trick)
+    const iframe = document.createElement('iframe');
+    iframe.name = "hidden_iframe";
+    iframe.style.display = "none";
+    document.body.appendChild(iframe);
 
-            leadCaptured = true;
-            modal.style.display = "none";
-            runCalculation();
-        });
+    const tempForm = document.createElement('form');
+    tempForm.action = ACTION_URL;
+    tempForm.method = "POST";
+    tempForm.target = "hidden_iframe";
+
+    // Mapping the entry IDs we found earlier
+    const entries = {
+        'entry.1045781291': email,
+        'entry.1065046570': city,
+        'entry.1166974658': phone
+    };
+
+    for (let key in entries) {
+        const input = document.createElement('input');
+        input.type = "hidden";
+        input.name = key;
+        input.value = entries[key];
+        tempForm.appendChild(input);
+    }
+
+    document.body.appendChild(tempForm);
+    tempForm.submit();
+
+    // 4. Reveal the Price
+    setTimeout(() => {
+        document.body.removeChild(tempForm);
+        document.body.removeChild(iframe);
+        leadCaptured = true;
+        modal.style.display = "none";
+        runCalculation(); // This shows the table
+    }, 500);
+});
 
         function runCalculation() {
             const density = parseFloat(document.getElementById('material').value);
