@@ -9,11 +9,29 @@
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
+    <div id="leadModal" class="modal">
+        <div class="modal-content">
+            <h3>Get Your Instant Quote</h3>
+            <p>Please provide your details to see the price breakdown.</p>
+            <form id="leadForm">
+                <label>Email Address *</label>
+                <input type="email" id="leadEmail" placeholder="email@example.com" required>
+                
+                <label>City *</label>
+                <input type="text" id="leadCity" placeholder="Your City" required>
+                
+                <label>Phone Number (Optional)</label>
+                <input type="text" id="leadPhone" placeholder="Mobile Number">
+                
+                <button type="submit" class="btn" style="width:100%; margin-top:10px;">Submit & View Price</button>
+            </form>
+        </div>
+    </div>
+
     <nav><div class="logo">LOGIKOS.IN</div><ul><li><a href="index.html">Home</a></li><li><a href="services.html">Services</a></li><li><a href="shop.html">Shop</a></li><li><a href="calculator.html">Cost Estimator</a></li></ul></nav>
 
     <div class="container">
         <h2>3D Printing Estimator</h2>
-        
         <div class="card">
             <div class="controls-row">
                 <div>
@@ -56,26 +74,74 @@
 
     <script>
         const pricePerGram = 7;
+        const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSf--2IT6gQOgpxfTGaslrxffKGPMsCQbkrt8GCFyn_y2GCZOQ/formResponse";
+        
         let scene, camera, renderer, controls, modelMesh, supportMesh, rawGeometry;
-        let stlVolume = 0, supportVolume = 0;
+        let stlVolume = 0, supportVolume = 0, leadCaptured = false;
+
+        // Modal Logic
+        const modal = document.getElementById("leadModal");
+        
+        document.getElementById('calculateBtn').addEventListener('click', function() {
+            if (!leadCaptured) {
+                modal.style.display = "flex";
+            } else {
+                runCalculation();
+            }
+        });
+
+        document.getElementById('leadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Prepare Data for Google Form
+            const email = document.getElementById('leadEmail').value;
+            const city = document.getElementById('leadCity').value;
+            const phone = document.getElementById('leadPhone').value;
+
+            const formData = new FormData();
+            formData.append('entry.1045781291', email);
+            formData.append('entry.1065046570', city);
+            formData.append('entry.1166974658', phone);
+
+            // Silent background submission
+            fetch(GOOGLE_FORM_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: formData
+            });
+
+            leadCaptured = true;
+            modal.style.display = "none";
+            runCalculation();
+        });
+
+        function runCalculation() {
+            const density = parseFloat(document.getElementById('material').value);
+            const infill = parseFloat(document.getElementById('infill').value) / 100;
+            const modelWeight = ((stlVolume * 0.2) + (stlVolume * 0.8 * infill)) / 1000 * density;
+            const supWeight = (supportVolume * 0.15) / 1000 * density;
+            
+            document.getElementById('mWeight').innerText = modelWeight.toFixed(2);
+            document.getElementById('sWeight').innerText = supWeight.toFixed(2);
+            document.getElementById('fPrice').innerText = ((modelWeight + supWeight) * pricePerGram).toFixed(2);
+            document.getElementById('result-card').style.display = 'block';
+        }
+
+        // --- THE REMAINDER OF YOUR 3D LOGIC (initScene, animate, rotateModel, updateVisuals, calculateVolume) ---
+        // (Keeping it exactly as your working version)
 
         function initScene() {
             const container = document.getElementById('viewer');
             if (scene) return;
-            
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0xf5f5f5);
-            
             camera = new THREE.PerspectiveCamera(45, container.clientWidth / 400, 0.1, 5000);
             camera.position.set(200, 200, 200);
-
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(container.clientWidth, 400);
             container.appendChild(renderer.domElement);
-
             scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.2));
             scene.add(new THREE.GridHelper(220, 22, 0x000000, 0xcccccc));
-
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             animate();
         }
@@ -97,23 +163,18 @@
         function updateVisuals() {
             if (modelMesh) scene.remove(modelMesh);
             if (supportMesh) scene.remove(supportMesh);
-
             rawGeometry.computeBoundingBox();
             const center = new THREE.Vector3();
             rawGeometry.boundingBox.getCenter(center);
             rawGeometry.translate(-center.x, -rawGeometry.boundingBox.min.y, -center.z);
-
             modelMesh = new THREE.Mesh(rawGeometry, new THREE.MeshStandardMaterial({color: 0x007bff, metalness: 0.3, roughness: 0.5}));
             scene.add(modelMesh);
-
-            // Support Logic
             const pos = rawGeometry.attributes.position.array;
             const norm = rawGeometry.attributes.normal.array;
             const supportGroup = new THREE.Group();
             supportVolume = 0;
-
             for (let i = 0; i < norm.length; i += 18) {
-                if (norm[i + 1] < -0.5) { // Facing down
+                if (norm[i + 1] < -0.5) {
                     const y = (pos[i+1] + pos[i+4] + pos[i+7]) / 3;
                     if (y > 1) {
                         const p = new THREE.Mesh(new THREE.BoxGeometry(2, y, 2), new THREE.MeshBasicMaterial({color: 0xff0000, transparent: true, opacity: 0.3}));
@@ -139,8 +200,6 @@
                 updateVisuals();
                 document.getElementById('rotation-controls').style.display = 'flex';
                 document.getElementById('calculateBtn').style.display = 'block';
-                
-                // Volume
                 stlVolume = 0;
                 const pos = rawGeometry.attributes.position.array;
                 for (let i = 0; i < pos.length; i += 9) {
@@ -152,16 +211,17 @@
             reader.readAsArrayBuffer(file);
         });
 
-        document.getElementById('calculateBtn').addEventListener('click', function() {
-            const density = parseFloat(document.getElementById('material').value);
-            const infill = parseFloat(document.getElementById('infill').value) / 100;
-            const modelWeight = ((stlVolume * 0.2) + (stlVolume * 0.8 * infill)) / 1000 * density;
-            const supWeight = (supportVolume * 0.15) / 1000 * density;
-            document.getElementById('mWeight').innerText = modelWeight.toFixed(2);
-            document.getElementById('sWeight').innerText = supWeight.toFixed(2);
-            document.getElementById('fPrice').innerText = ((modelWeight + supWeight) * pricePerGram).toFixed(2);
-            document.getElementById('result-card').style.display = 'block';
-        });
+        function calculateVolume(geometry) {
+            let volume = 0;
+            const pos = geometry.attributes.position.array;
+            for (let i = 0; i < pos.length; i += 9) {
+                let v1 = {x:pos[i], y:pos[i+1], z:pos[i+2]};
+                let v2 = {x:pos[i+3], y:pos[i+4], z:pos[i+5]};
+                let v3 = {x:pos[i+6], y:pos[i+7], z:pos[i+8]};
+                volume += (-v3.x*v2.y*v1.z + v2.x*v3.y*v1.z + v3.x*v1.y*v2.z - v1.x*v3.y*v2.z - v2.x*v1.y*v3.z + v1.x*v2.y*v3.z) / 6;
+            }
+            return Math.abs(volume);
+        }
     </script>
 </body>
 </html>
