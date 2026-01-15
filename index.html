@@ -3,46 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logikos.in | Simple is sensible</title>
+    <title>Logikos | 3D Printing Cost Estimator</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Modern Header for Join Button */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            box-sizing: border-box;
+        }
+
+        .logo-text {
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+        }
+
+        .join-btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: background 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+        }
+
+        .join-btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        /* Adjusting main container for the fixed header */
+        #container {
+            margin-top: 70px;
+        }
+
+        /* Basic styling for the 3D viewer area */
+        #viewer-container {
+            width: 100%;
+            height: 500px;
+            background: #1a1a1a;
+            border-radius: 12px;
+            position: relative;
+        }
+    </style>
 </head>
 <body>
-    <nav>
-        <div class="logo">LOGIKOS.IN</div>
-        <a href="seller.html" class="btn-join" style="position: absolute; top: 20px; right: 20px; background: #007bff; color: white; padding: 10px 20px; border-radius: 20px; text-decoration: none; font-weight: bold;">Join Community</a>
-        <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="services.html">Services</a></li>
-            <li><a href="shop.html">Shop</a></li>
-            <li><a href="calculator.html">Cost Estimator</a></li>
-        </ul>
-    </nav>
 
-    <header class="hero">
-        <h1>Logikos.in</h1>
-        <p class="tagline">Simple is sensible</p>
-        <a href="calculator.html" class="btn">Start a Project</a>
+    <header class="top-nav">
+        <div class="logo-text">LOGIKOS</div>
+        <a href="seller.html" class="join-btn">Join Community</a>
     </header>
 
-    <section class="container">
-        <div class="grid-2">
-            <div class="card">
-                <h2>Our Vision</h2>
-                <p>To create sensible products and systems that stand the test of time.</p>
-            </div>
-            <div class="card">
-                <h2>Our Mission</h2>
-                <p>To solve real problems with clarity, restraint, and engineering honesty—creating systems that remain useful, repairable, and relevant over time.</p>
-            </div>
-        </div>
+    <main id="container">
+        <section class="calculator-box">
+            <h1>3D Print Cost Estimator</h1>
+            <p>Upload your STL file to get an instant quote.</p>
 
-        <div class="card" style="margin-top: 30px;">
-            <h2>About Us</h2>
-            <p>We are a team of enthusiastic individuals providing solutions to issues that ache us and our surroundings.</p>
-            <hr>
-            <h3>Contact Us</h3>
-            <p>Email: <a href="mailto:alogikos@gmail.com">alogikos@gmail.com</a></p>
-        </div>
-    </section>
+            <div id="viewer-container">
+                <div id="loading-overlay" class="hidden">Processing Model...</div>
+            </div>
+
+            <div class="controls">
+                <input type="file" id="stl-upload" accept=".stl">
+                
+                <div class="input-group">
+                    <label>Select Provider</label>
+                    <select id="provider-select">
+                        <option value="default">Logikos Standard</option>
+                    </select>
+                </div>
+
+                <div class="results" id="price-display">
+                    <h3>Estimated Price: <span id="cost">₹0.00</span></h3>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="calculator.js"></script> 
+
 </body>
 </html>
