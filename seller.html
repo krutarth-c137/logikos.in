@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Portal | Logikos</title>
+    <style>
+        :root { --primary: #007bff; --success: #28a745; --dark: #333; --light: #f8f9fa; }
+        body { font-family: 'Segoe UI', sans-serif; background: #eef2f3; margin: 0; padding: 20px; color: var(--dark); }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .hidden { display: none; }
+        h2 { margin-top: 0; color: var(--primary); }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
+        .btn-secondary { background: #6c757d; margin-top: 10px; }
+        .material-card { background: var(--light); padding: 15px; border-radius: 10px; margin-top: 10px; border-left: 4px solid var(--primary); }
+        .mat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .mat-row input[type="number"] { width: 100px; }
+        .nav-toggle { text-align: center; margin-top: 15px; font-size: 14px; }
+        .nav-toggle span { color: var(--primary); cursor: pointer; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="authView">
+        <h2 id="authTitle">Seller Sign-In</h2>
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="username" placeholder="Enter username">
+        </div>
+        <div id="signupOnly" class="hidden">
+            <div class="form-group"><label>Company Name</label><input type="text" id="companyName"></div>
+            <div class="form-group"><label>Email</label><input type="email" id="email"></div>
+            <div class="form-group"><label>Contact</label><input type="text" id="contact"></div>
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="password" placeholder="••••••••">
+        </div>
+        <button class="btn" onclick="handleAuth()">Continue</button>
+        <div class="nav-toggle">
+            <p id="toggleMsg">New to Logikos? <span onclick="toggleAuth()">Create an account</span></p>
+        </div>
+    </div>
+
+    <div id="dashboardView" class="hidden">
+        <h2>Welcome, <span id="userDisplay">Seller</span></h2>
+        <p>Manage your 3D printing fleet below.</p>
+        <button class="btn" onclick="showPrinterForm()" style="background: var(--success);">+ Add New Printer</button>
+    </div>
+
+    <div id="printerView" class="hidden">
+        <h2>Configure Printer</h2>
+        <div class="form-group"><label>Printer Brand</label><input type="text" id="brand" placeholder="e.g. Creality"></div>
+        <div class="form-group"><label>Model</label><input type="text" id="model" placeholder="e.g. Ender 3 V3"></div>
+        
+        <label>Material Pricing (INR per Gram)</label>
+        <div class="material-card" id="materialList">
+            <div class="mat-row">
+                <input type="checkbox" class="mat-check" value="PLA"> <span>PLA</span>
+                <input type="number" class="mat-price hidden" placeholder="₹/g">
+            </div>
+            <div class="mat-row">
+                <input type="checkbox" class="mat-check" value="ABS"> <span>ABS</span>
+                <input type="number" class="mat-price hidden" placeholder="₹/g">
+            </div>
+        </div>
+        <button class="btn-secondary" style="padding:5px; width:auto; font-size:12px;" onclick="addCustomMaterial()">+ Add Other Material</button>
+
+        <div class="form-group" style="margin-top:20px;"><label>Base Rate (₹)</label><input type="number" id="baseRate" value="0"></div>
+        <div class="form-group"><label>Post Processing (₹)</label><input type="number" id="postProcess" value="0"></div>
+        <div class="form-group"><label>Buffer/Other (₹)</label><input type="number" id="buffer" value="0"></div>
+        
+        <button class="btn" onclick="submitPrinter()">Save Printer Config</button>
+        <button class="btn btn-secondary" onclick="showDashboard()">Back to Dashboard</button>
+    </div>
+</div>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwXYsetVjYSuSJorTwuWs57B_6ZEWBbDusLaYfW6lrKnClO88EC1xMV8JpciCSblwWf/exec"; // Your V5 URL
+    let isSignup = false;
+    let sellerId = null;
+
+    function toggleAuth() {
+        isSignup = !isSignup;
+        document.getElementById('signupOnly').classList.toggle('hidden');
+        document.getElementById('authTitle').innerText = isSignup ? "Seller Sign-Up" : "Seller Sign-In";
+        document.getElementById('toggleMsg').innerHTML = isSignup ? "Already have an account? <span onclick='toggleAuth()'>Sign In</span>" : "New to Logikos? <span onclick='toggleAuth()'>Create an account</span>";
+    }
+
+    // Material Checkbox Logic
+    document.addEventListener('change', (e) => {
+        if(e.target.classList.contains('mat-check')) {
+            e.target.parentElement.querySelector('.mat-price').classList.toggle('hidden', !e.target.checked);
+        }
+    });
+
+    async function handleAuth() {
+        const payload = {
+            action: isSignup ? "signup" : "signin",
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value,
+            companyName: document.getElementById('companyName').value,
+            email: document.getElementById('email').value,
+            contact: document.getElementById('contact').value
+        };
+
+        // Use a hidden form style submission for GAS reliability
+        const formData = new URLSearchParams();
+        for (const key in payload) formData.append(key, payload[key]);
+
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: formData
+        });
+
+        // Since no-cors doesn't return data, for prototype we assume success or 
+        // in Step 3 we will add a secondary verification.
+        alert("Authentication request sent. Proceeding to Dashboard...");
+        showDashboard();
+    }
+
+    function addCustomMaterial() {
+        const div = document.createElement('div');
+        div.className = "mat-row";
+        div.innerHTML = `<input type="text" placeholder="Material Name" class="custom-name" style="width:100px;"> 
+                         <input type="checkbox" class="mat-check" checked> 
+                         <input type="number" class="mat-price" placeholder="₹/g">`;
+        document.getElementById('materialList').appendChild(div);
+    }
+
+    function showDashboard() {
+        document.getElementById('authView').classList.add('hidden');
+        document.getElementById('printerView').classList.add('hidden');
+        document.getElementById('dashboardView').classList.remove('hidden');
+    }
+
+    function showPrinterForm() {
+        document.getElementById('dashboardView').classList.add('hidden');
+        document.getElementById('printerView').classList.remove('hidden');
+    }
+
+    async function submitPrinter() {
+        const materials = [];
+        document.querySelectorAll('.mat-row').forEach(row => {
+            const check = row.querySelector('.mat-check');
+            if(check && check.checked) {
+                const name = row.querySelector('span') ? row.querySelector('span').innerText : row.querySelector('.custom-name').value;
+                materials.push({ name: name, cost: row.querySelector('.mat-price').value });
+            }
+        });
+
+        const payload = {
+            action: "addPrinter",
+            sellerId: "VND_TEMP", // We will link this properly in the final step
+            brand: document.getElementById('brand').value,
+            model: document.getElementById('model').value,
+            baseRate: document.getElementById('baseRate').value,
+            postProcess: document.getElementById('postProcess').value,
+            buffer: document.getElementById('buffer').value,
+            materials: JSON.stringify(materials)
+        };
+
+        const formData = new URLSearchParams();
+        for (const key in payload) formData.append(key, payload[key]);
+
+        await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: formData });
+        alert("Printer settings saved!");
+        showDashboard();
+    }
+</script>
+
+</body>
+</html>
