@@ -146,16 +146,15 @@
             document.getElementById('form-title').innerText = mode === 'seller' ? "Maker Registration" : "User Login";
         }
 
-        function submitAuth() {
-            const email = document.getElementById('auth-email').value;
-            if(email.includes('@')) {
-                // Approved: Proceed to Stage 1 (Welcome Cards)
-                document.getElementById('auth-form-container').style.display = 'none';
-                document.getElementById('welcome-screen').style.display = 'block';
-            } else {
-                alert("Please enter a valid email address.");
-            }
-        }
+       function submitAuth() {
+    const email = document.getElementById('auth-email').value;
+    if(email.includes('@')) {
+        document.getElementById('auth-form-container').style.display = 'none';
+        document.getElementById('welcome-screen').style.display = 'block';
+        // Tell the browser we moved to the Welcome screen
+        history.pushState({view: 'welcome'}, ""); 
+    }
+}
 
         // --- DASHBOARD LOGIC ---
         function initCrosshair() {
@@ -181,11 +180,22 @@
         }
 
         function resetCrosshair() {
-            const system = document.getElementById('crosshair-system');
-            system.className = '';
-            document.getElementById('quad-content').style.display = 'none';
-            document.querySelectorAll('.quadrant').forEach(q => q.style.display = 'flex');
-        }
+    const system = document.getElementById('crosshair-system');
+    const content = document.getElementById('quad-content');
+    const welcome = document.getElementById('welcome-screen');
+
+    // If we are looking at a specific quadrant description, go back to the 4-quadrant crosshair
+    if (content.style.display === 'block') {
+        system.className = ''; // Remove the move-qX class to center the crosshair
+        content.style.display = 'none';
+        document.querySelectorAll('.quadrant').forEach(q => q.style.display = 'flex');
+    } 
+    // If we are already at the 4-quadrant crosshair, go back to the 3 Welcome Cards
+    else {
+        system.style.display = 'none';
+        welcome.style.display = 'block';
+    }
+}
     </script>
 </body>
 </html>
