@@ -2,34 +2,158 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Shop | Logikos.in</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop | Logikos</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <style>
+        /* Product Grid Container */
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* Exactly 3 products per row */
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        /* Product Card Styling */
+        .product-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s;
+            background: #fff;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .product-image {
+            width: 100%;
+            aspect-ratio: 1 / 1; /* Forces square shape from drawing */
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        .product-image img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .product-name {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+
+        .product-desc {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 15px;
+            flex-grow: 1; /* Ensures buttons align even if text length varies */
+        }
+
+        .product-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+
+        .product-price {
+            font-weight: bold;
+            color: #1a1a1a;
+            font-size: 1.1rem;
+        }
+
+        /* Buy Now Button */
+        .bn-button {
+            background-color: #1a1a1a;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+
+        .bn-button:hover {
+            background-color: #444;
+        }
+
+        /* Mobile adjustment */
+        @media (max-width: 768px) {
+            .shop-grid { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
-    <nav><div class="logo">LOGIKOS.IN</div><ul><li><a href="index.html">Home</a></li><li><a href="services.html">Services</a></li><li><a href="shop.html">Shop</a></li><li><a href="calculator.html">Cost Estimator</a></li></ul></nav>
 
-    <div class="container">
-        <h1 style="text-align:center;">Products</h1>
-        <div class="product-grid">
+    <header id="global-header"></header>
+
+    <main>
+        <h1>Logikos Shop</h1>
+        <p>Quality components and curated products.</p>
+
+        <div class="shop-grid">
             <div class="product-card">
-                <h3>Benchy</h3>
-                <p>Your typical benchy.</p>
-                <p class="price">₹299</p>
-                <button class="btn">Buy Now</button>
+                <div class="product-image">
+                    <span>IMAGE</span> </div>
+                <div class="product-name">Logikos Filament</div>
+                <div class="product-desc">Premium PLA, high-strength, consistent diameter for precision 3D printing.</div>
+                <div class="product-footer">
+                    <span class="product-price">₹ 999</span>
+                    <button class="bn-button">BN</button>
+                </div>
             </div>
+
             <div class="product-card">
-                <h3>Film Scanner</h3>
-                <p>Now film scanning made easy with this automatic scanner.</p>
-                <p class="price">₹4,999</p>
-                <button class="btn">Buy Now</button>
+                <div class="product-image">
+                    <span>IMAGE</span>
+                </div>
+                <div class="product-name">Vibration Dampeners</div>
+                <div class="product-desc">Industrial-grade rubber mounts designed for vehicle dynamics and machine stability.</div>
+                <div class="product-footer">
+                    <span class="product-price">₹ 450</span>
+                    <button class="bn-button">BN</button>
+                </div>
             </div>
+
             <div class="product-card">
-                <h3>Lamp</h3>
-                <p>A table top lamp.</p>
-                <p class="price">₹499</p>
-                <button class="btn">Buy Now</button>
+                <div class="product-image">
+                    <span>IMAGE</span>
+                </div>
+                <div class="product-name">Lean Toolkit</div>
+                <div class="product-desc">Essential visual management markers and Kanban cards for shop floor transformation.</div>
+                <div class="product-footer">
+                    <span class="product-price">₹ 1,200</span>
+                    <button class="bn-button">BN</button>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image">
+                    <span>IMAGE</span>
+                </div>
+                <div class="product-name">Nozzle Set</div>
+                <div class="product-desc">Hardened steel nozzles for abrasive filaments. Multiple diameters included.</div>
+                <div class="product-footer">
+                    <span class="product-price">₹ 750</span>
+                    <button class="bn-button">BN</button>
+                </div>
             </div>
         </div>
-    </div>
+    </main>
+
+    <footer id="global-footer"></footer>
+
+    <script src="../js/navigation.js"></script>
 </body>
 </html>
