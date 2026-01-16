@@ -2,251 +2,106 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Cost Estimator | Logikos.in</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/STLLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
+    <title>Cost Estimator | Logikos</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <style>
+        .calc-container { display: flex; flex-direction: column; gap: 20px; max-width: 900px; margin: auto; }
+        .row { display: flex; gap: 20px; align-items: flex-end; }
+        .input-group { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+        
+        /* 3D Viewer Area */
+        #viewer-frame { 
+            width: 100%; 
+            height: 400px; 
+            background: #eee; 
+            border: 2px dashed #ccc; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+        }
+
+        /* Material Selection Grid */
+        .material-grid { 
+            display: grid; 
+            grid-template-columns: repeat(5, 1fr); 
+            gap: 10px; 
+            margin: 10px 0; 
+        }
+        .mat-btn { 
+            padding: 10px; 
+            border: 1px solid #1a1a1a; 
+            background: white; 
+            cursor: pointer; 
+            text-align: center;
+        }
+        .mat-btn.active { background: #1a1a1a; color: white; }
+
+        .result-zone { 
+            padding: 20px; 
+            background: #f9f9f9; 
+            border: 1px solid #ddd; 
+            text-align: center; 
+        }
+        .checkout-btn { 
+            background: #28a745; 
+            color: white; 
+            padding: 15px 30px; 
+            border: none; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-    <div id="leadModal" class="modal">
-        <div class="modal-content">
-            <h3>Get Your Instant Quote</h3>
-            <p>Please provide your details to see the price breakdown.</p>
-            <form id="leadForm">
-                <label>Email Address *</label>
-                <input type="email" id="leadEmail" placeholder="email@example.com" required>
-                
-                <label>City *</label>
-                <input type="text" id="leadCity" placeholder="Your City" required>
-                
-                <label>Phone Number (Optional)</label>
-                <input type="text" id="leadPhone" placeholder="Mobile Number">
-                
-                <button type="submit" class="btn" style="width:100%; margin-top:10px;">Submit & View Price</button>
-            </form>
-        </div>
-    </div>
+    <header id="global-header"></header>
 
-    <nav><div class="logo">LOGIKOS.IN</div><ul><li><a href="index.html">Home</a></li><li><a href="services.html">Services</a></li><li><a href="shop.html">Shop</a></li><li><a href="calculator.html">Cost Estimator</a></li></ul></nav>
+    <main class="calc-container">
+        <h1>3D Print Cost Estimator</h1>
 
-    <div class="container">
-        <h2>3D Printing Estimator</h2>
-        <div class="card">
-            <div class="controls-row">
-                <div>
-                    <label>Material</label>
-                    <select id="material" class="file-input">
-                        <option value="1.24">PLA (1.24 g/cm³)</option>
-                        <option value="1.04">ABS (1.04 g/cm³)</option>
-                        <option value="1.27">PETG (1.27 g/cm³)</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Infill (%)</label>
-                    <input type="range" id="infill" min="0" max="100" value="20" style="width:100%" oninput="document.getElementById('infillVal').innerText=this.value">
-                    <span id="infillVal">20</span>%
-                </div>
+        <div class="row">
+            <div class="input-group">
+                <label>Upload STL</label>
+                <input type="file" id="stl-upload" accept=".stl">
             </div>
-
-            <label>Upload STL</label>
-            <input type="file" id="stl_file" accept=".stl" class="file-input" />
-            
-            <div id="rotation-controls" style="display:none; gap:10px; margin-top:15px;">
-                <button class="btn-small" onclick="rotateModel('x')">Rotate X</button>
-                <button class="btn-small" onclick="rotateModel('y')">Rotate Y</button>
-                <button class="btn-small" onclick="rotateModel('z')">Rotate Z</button>
-            </div>
-
-            <div id="viewer"></div>
-
-            <button id="calculateBtn" class="btn" style="width:100%; margin-top:20px; display:none; background:#28a745;">Calculate Total Price</button>
-
-            <div id="result-card" style="display:none;">
-                <table class="result-table">
-                    <tr><td>Model Weight</td><td style="text-align:right;"><span id="mWeight">0</span>g</td></tr>
-                    <tr><td>Support Weight</td><td style="text-align:right;"><span id="sWeight">0</span>g</td></tr>
-                    <tr class="total-row"><td>Total Cost</td><td style="text-align:right;">₹<span id="fPrice">0</span></td></tr>
-                </table>
+            <div class="input-group">
+                <label>Infill (%)</label>
+                <select id="infill">
+                    <option value="15">15% (Light)</option>
+                    <option value="40">40% (Standard)</option>
+                    <option value="80">80% (Heavy)</option>
+                </select>
             </div>
         </div>
-    </div>
 
-    <script>
-        const pricePerGram = 7;
-        const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSf--2IT6gQOgpxfTGaslrxffKGPMsCQbkrt8GCFyn_y2GCZOQ/formResponse";
-        
-        let scene, camera, renderer, controls, modelMesh, supportMesh, rawGeometry;
-        let stlVolume = 0, supportVolume = 0, leadCaptured = false;
+        <label>Select Material</label>
+        <div class="material-grid">
+            <button class="mat-btn">PLA</button>
+            <button class="mat-btn">ABS</button>
+            <button class="mat-btn">PETG</button>
+            <button class="mat-btn">Resin</button>
+            <button class="mat-btn">Nylon</button>
+        </div>
 
-        // Modal Logic
-        const modal = document.getElementById("leadModal");
-        
-        document.getElementById('calculateBtn').addEventListener('click', function() {
-            if (!leadCaptured) {
-                modal.style.display = "flex";
-            } else {
-                runCalculation();
-            }
-        });
+        <div id="viewer-frame">
+            <p>3D Viewer will load here after upload</p>
+        </div>
 
-        document.getElementById('leadForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    // 1. Get Values
-    const email = document.getElementById('leadEmail').value;
-    const city = document.getElementById('leadCity').value;
-    const phone = document.getElementById('leadPhone').value;
+        <div id="contact-gate" style="display:none;" class="row">
+            <input type="email" placeholder="Email" id="user-email">
+            <input type="text" placeholder="City" id="user-city">
+            <button class="btn-box" id="calc-trigger">CALCULATE</button>
+        </div>
 
-    // 2. The CORRECT Endpoint (Ending in /formResponse)
-    const ACTION_URL = "https://docs.google.com/forms/d/e/1FAIpQLSf--2IT6gQOgpxfTGaslrxffKGPMsCQbkrt8GCFyn_y2GCZOQ/formResponse";
+        <div class="result-zone">
+            <h3>Estimated Cost: <span id="cost-display">₹ 0.00</span></h3>
+            <p><small>Disclaimer: Actual cost may vary 5–10%</small></p>
+            <button class="checkout-btn">CHECKOUT / INQUIRY</button>
+        </div>
+    </main>
 
-    // 3. Create a hidden submission (The Iframe Trick)
-    const iframe = document.createElement('iframe');
-    iframe.name = "hidden_iframe";
-    iframe.style.display = "none";
-    document.body.appendChild(iframe);
-
-    const tempForm = document.createElement('form');
-    tempForm.action = ACTION_URL;
-    tempForm.method = "POST";
-    tempForm.target = "hidden_iframe";
-
-    // Mapping the entry IDs we found earlier
-    const entries = {
-        'entry.1045781291': email,
-        'entry.1065046570': city,
-        'entry.1166974658': phone
-    };
-
-    for (let key in entries) {
-        const input = document.createElement('input');
-        input.type = "hidden";
-        input.name = key;
-        input.value = entries[key];
-        tempForm.appendChild(input);
-    }
-
-    document.body.appendChild(tempForm);
-    tempForm.submit();
-
-    // 4. Reveal the Price
-    setTimeout(() => {
-        document.body.removeChild(tempForm);
-        document.body.removeChild(iframe);
-        leadCaptured = true;
-        modal.style.display = "none";
-        runCalculation(); // This shows the table
-    }, 500);
-});
-
-        function runCalculation() {
-            const density = parseFloat(document.getElementById('material').value);
-            const infill = parseFloat(document.getElementById('infill').value) / 100;
-            const modelWeight = ((stlVolume * 0.2) + (stlVolume * 0.8 * infill)) / 1000 * density;
-            const supWeight = (supportVolume * 0.15) / 1000 * density;
-            
-            document.getElementById('mWeight').innerText = modelWeight.toFixed(2);
-            document.getElementById('sWeight').innerText = supWeight.toFixed(2);
-            document.getElementById('fPrice').innerText = ((modelWeight + supWeight) * pricePerGram).toFixed(2);
-            document.getElementById('result-card').style.display = 'block';
-        }
-
-        // --- THE REMAINDER OF YOUR 3D LOGIC (initScene, animate, rotateModel, updateVisuals, calculateVolume) ---
-        // (Keeping it exactly as your working version)
-
-        function initScene() {
-            const container = document.getElementById('viewer');
-            if (scene) return;
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xf5f5f5);
-            camera = new THREE.PerspectiveCamera(45, container.clientWidth / 400, 0.1, 5000);
-            camera.position.set(200, 200, 200);
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(container.clientWidth, 400);
-            container.appendChild(renderer.domElement);
-            scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.2));
-            scene.add(new THREE.GridHelper(220, 22, 0x000000, 0xcccccc));
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            animate();
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            if (controls) controls.update();
-            if (renderer) renderer.render(scene, camera);
-        }
-
-        function rotateModel(axis) {
-            if (!rawGeometry) return;
-            if (axis === 'x') rawGeometry.rotateX(Math.PI / 2);
-            if (axis === 'y') rawGeometry.rotateY(Math.PI / 2);
-            if (axis === 'z') rawGeometry.rotateZ(Math.PI / 2);
-            updateVisuals();
-        }
-
-        function updateVisuals() {
-            if (modelMesh) scene.remove(modelMesh);
-            if (supportMesh) scene.remove(supportMesh);
-            rawGeometry.computeBoundingBox();
-            const center = new THREE.Vector3();
-            rawGeometry.boundingBox.getCenter(center);
-            rawGeometry.translate(-center.x, -rawGeometry.boundingBox.min.y, -center.z);
-            modelMesh = new THREE.Mesh(rawGeometry, new THREE.MeshStandardMaterial({color: 0x007bff, metalness: 0.3, roughness: 0.5}));
-            scene.add(modelMesh);
-            const pos = rawGeometry.attributes.position.array;
-            const norm = rawGeometry.attributes.normal.array;
-            const supportGroup = new THREE.Group();
-            supportVolume = 0;
-            for (let i = 0; i < norm.length; i += 18) {
-                if (norm[i + 1] < -0.5) {
-                    const y = (pos[i+1] + pos[i+4] + pos[i+7]) / 3;
-                    if (y > 1) {
-                        const p = new THREE.Mesh(new THREE.BoxGeometry(2, y, 2), new THREE.MeshBasicMaterial({color: 0xff0000, transparent: true, opacity: 0.3}));
-                        p.position.set(pos[i], y/2, pos[i+2]);
-                        supportGroup.add(p);
-                        supportVolume += (4 * y);
-                    }
-                }
-            }
-            supportMesh = supportGroup;
-            scene.add(supportMesh);
-        }
-
-        document.getElementById('stl_file').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function() {
-                const loader = new THREE.STLLoader();
-                rawGeometry = loader.parse(this.result);
-                document.getElementById('viewer').style.display = 'block';
-                initScene();
-                updateVisuals();
-                document.getElementById('rotation-controls').style.display = 'flex';
-                document.getElementById('calculateBtn').style.display = 'block';
-                stlVolume = 0;
-                const pos = rawGeometry.attributes.position.array;
-                for (let i = 0; i < pos.length; i += 9) {
-                    let v1={x:pos[i],y:pos[i+1],z:pos[i+2]}, v2={x:pos[i+3],y:pos[i+4],z:pos[i+5]}, v3={x:pos[i+6],y:pos[i+7],z:pos[i+8]};
-                    stlVolume += (-v3.x*v2.y*v1.z + v2.x*v3.y*v1.z + v3.x*v1.y*v2.z - v1.x*v3.y*v2.z - v2.x*v1.y*v3.z + v1.x*v2.y*v3.z) / 6;
-                }
-                stlVolume = Math.abs(stlVolume);
-            };
-            reader.readAsArrayBuffer(file);
-        });
-
-        function calculateVolume(geometry) {
-            let volume = 0;
-            const pos = geometry.attributes.position.array;
-            for (let i = 0; i < pos.length; i += 9) {
-                let v1 = {x:pos[i], y:pos[i+1], z:pos[i+2]};
-                let v2 = {x:pos[i+3], y:pos[i+4], z:pos[i+5]};
-                let v3 = {x:pos[i+6], y:pos[i+7], z:pos[i+8]};
-                volume += (-v3.x*v2.y*v1.z + v2.x*v3.y*v1.z + v3.x*v1.y*v2.z - v1.x*v3.y*v2.z - v2.x*v1.y*v3.z + v1.x*v2.y*v3.z) / 6;
-            }
-            return Math.abs(volume);
-        }
-    </script>
+    <footer id="global-footer"></footer>
+    <script src="../js/navigation.js"></script>
+    <script src="../js/brain.js"></script>
 </body>
 </html>
