@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function() {
-    // 1. INJECT HEADER
+    // 1. INJECT HEADER (Updated Order)
     const header = document.querySelector("#global-header");
     if (header) {
         header.innerHTML = `
@@ -8,21 +8,21 @@ document.addEventListener("DOMContentLoaded", function() {
                 <ul>
                     <li><a href="/index.html">Home</a></li>
                     <li><a href="/pages/services.html">Services</a></li>
-                    <li><a href="/pages/calculator.html">Cost Estimator</a></li>
                     <li><a href="/pages/shop.html">Shop</a></li>
+                    <li><a href="/pages/calculator.html">Cost Estimator</a></li>
                     <li><a href="/pages/community.html">Community</a></li>
                 </ul>
             </nav>
         `;
     }
 
-    // 2. INJECT FOOTER
+    // 2. INJECT FOOTER (Updated Email)
     const footer = document.querySelector("#global-footer");
     if (footer) {
         footer.innerHTML = `
             <div class="footer-content">
                 <span>© 2026 Logikos.in</span>
-                <span>Contact: email@logikos.in</span>
+                <span>Contact: alogikos@gmail.com</span>
             </div>
         `;
     }
