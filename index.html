@@ -3,99 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logikos | 3D Printing Cost Estimator</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Logikos | Simple is Sensible</title>
+    <link rel="stylesheet" href="css/main.css">
     <style>
-        /* Modern Header for Join Button */
-        .top-nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 15px 30px;
+        /* Specific Styles for the No-Scroll Home Page */
+        body { 
+            overflow: hidden; /* Prevents scrolling as per your vision */
+            height: 100vh;
+        }
+        
+        .hero-section {
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            justify-content: center;
             align-items: center;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
-            box-sizing: border-box;
+            height: calc(100vh - 140px); /* Adjusts for Header and Footer height */
+            text-align: center;
+            padding: 20px;
         }
 
-        .logo-text {
-            color: white;
+        .vision-mission-container {
+            display: flex;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .btn-box {
+            padding: 20px 40px;
+            border: 2px solid #1a1a1a;
+            background: none;
+            cursor: pointer;
             font-weight: bold;
-            font-size: 1.2rem;
-            letter-spacing: 1px;
+            transition: 0.3s;
         }
 
-        .join-btn {
-            background: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 25px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 0.9rem;
-            transition: background 0.3s ease, transform 0.2s ease;
-            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-        }
-
-        .join-btn:hover {
-            background: #0056b3;
-            transform: translateY(-2px);
-        }
-
-        /* Adjusting main container for the fixed header */
-        #container {
-            margin-top: 70px;
-        }
-
-        /* Basic styling for the 3D viewer area */
-        #viewer-container {
-            width: 100%;
-            height: 500px;
+        .btn-box:hover {
             background: #1a1a1a;
-            border-radius: 12px;
-            position: relative;
+            color: white;
+        }
+
+        .about-us {
+            max-width: 800px;
+            margin-top: 20px;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
 
-    <header class="top-nav">
-        <div class="logo-text">LOGIKOS</div>
-        <a href="seller.html" class="join-btn">Join Community</a>
-    </header>
+    <header id="global-header"></header>
 
-    <main id="container">
-        <section class="calculator-box">
-            <h1>3D Print Cost Estimator</h1>
-            <p>Upload your STL file to get an instant quote.</p>
+    <main class="hero-section">
+        <h1>LOGIKOS</h1>
+        
+        <div class="vision-mission-container">
+            <button class="btn-box">VISION</button>
+            <button class="btn-box">MISSION</button>
+        </div>
 
-            <div id="viewer-container">
-                <div id="loading-overlay" class="hidden">Processing Model...</div>
-            </div>
-
-            <div class="controls">
-                <input type="file" id="stl-upload" accept=".stl">
-                
-                <div class="input-group">
-                    <label>Select Provider</label>
-                    <select id="provider-select">
-                        <option value="default">Logikos Standard</option>
-                    </select>
-                </div>
-
-                <div class="results" id="price-display">
-                    <h3>Estimated Price: <span id="cost">₹0.00</span></h3>
-                </div>
-            </div>
-        </section>
+        <div class="about-us">
+            <p><strong>About Us:</strong> Your description goes here. Simple is sensible. We are building the future of distributed 3D printing manufacturing.</p>
+        </div>
     </main>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="calculator.js"></script> 
+    <footer id="global-footer"></footer>
 
+    <script src="js/navigation.js"></script>
 </body>
 </html>
