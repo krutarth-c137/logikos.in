@@ -3,157 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seller Portal | Logikos</title>
+    <title>Community | Logikos</title>
+    <link rel="stylesheet" href="../css/main.css">
     <style>
-        :root { --primary: #007bff; --success: #28a745; --dark: #333; --light: #f8f9fa; }
-        body { font-family: 'Segoe UI', sans-serif; background: #eef2f3; margin: 0; padding: 20px; color: var(--dark); }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .hidden { display: none; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
-        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
-        .printer-card { background: var(--light); padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 5px solid var(--primary); position: relative; }
-        .mat-tag { background: #d1ecf1; color: #0c5460; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-right: 5px; }
-        .mat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background: #fff; padding: 5px; border-radius: 5px; }
-        .mat-price { width: 80px !important; }
+        body, html { height: 100%; overflow: hidden; }
+
+        .community-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: calc(100vh - 140px);
+            margin-top: 80px;
+            padding: 0 5%;
+        }
+
+        /* Initial Choice View */
+        .gateway-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .choice-card {
+            border: 2px solid #1a1a1a;
+            padding: 60px 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .choice-card:hover {
+            background: #1a1a1a;
+            color: white;
+        }
+
+        .choice-card h2 { margin-bottom: 15px; text-transform: uppercase; }
+
+        /* Registration/Login Form (Hidden by default) */
+        #auth-form-container {
+            display: none;
+            width: 100%;
+            max-width: 400px;
+            border: 2px solid #1a1a1a;
+            padding: 40px;
+            background: #fff;
+        }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input { width: 100%; padding: 12px; border: 1px solid #ccc; }
+
+        .form-btn {
+            width: 100%;
+            padding: 15px;
+            background: #1a1a1a;
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 20px;
+            text-align: center;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div id="authView">
-        <h2 id="authTitle">Seller Sign-In</h2>
-        <div class="form-group"><label>Username</label><input type="text" id="username"></div>
-        <div id="signupOnly" class="hidden">
-            <div class="form-group"><label>Company Name</label><input type="text" id="companyName"></div>
-            <div class="form-group"><label>Email</label><input type="email" id="email"></div>
+    <header id="global-header"></header>
+
+    <main class="community-container">
+        
+        <div id="choice-view" class="gateway-grid">
+            <div class="choice-card" onclick="showForm('seller')">
+                <h2>Maker / Seller</h2>
+                <p>Join the distributed manufacturing network.</p>
+            </div>
+            <div class="choice-card" onclick="showForm('user')">
+                <h2>User Login</h2>
+                <p>Access your orders and saved designs.</p>
+            </div>
         </div>
-        <div class="form-group"><label>Password</label><input type="password" id="password"></div>
-        <button class="btn" onclick="handleAuth()">Continue</button>
-        <p style="text-align:center; font-size:14px; margin-top:15px;">
-            <span id="toggleMsg">New to Logikos? <a href="#" onclick="toggleAuth()">Create an account</a></span>
-        </p>
-    </div>
 
-    <div id="dashboardView" class="hidden">
-        <h2>Welcome, <span id="userDisplay">...</span></h2>
-        <div id="fleetContainer"></div>
-        <button class="btn" onclick="showPrinterForm()" style="background: var(--success); margin-top:10px;">+ Add New Printer</button>
-        <button class="btn" onclick="location.reload()" style="background: #6c757d; margin-top:10px;">Logout</button>
-    </div>
+        <div id="auth-form-container">
+            <h2 id="form-title">Join as Maker</h2>
+            <p id="form-subtitle" style="margin-bottom: 20px; font-size: 0.9rem; color: #666;"></p>
+            
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="auth-email" placeholder="name@email.com">
+            </div>
+            
+            <div class="form-group" id="phone-group">
+                <label>Phone Number (Optional)</label>
+                <input type="tel" id="auth-phone" placeholder="+91 ...">
+            </div>
 
-    <div id="printerView" class="hidden">
-        <h2>Configure Printer</h2>
-        <div class="form-group"><label>Brand</label><input type="text" id="brand"></div>
-        <div class="form-group"><label>Model</label><input type="text" id="model"></div>
-        <div class="form-group"><label>Base Rate (₹)</label><input type="number" id="baseRate" value="0"></div>
-        
-        <label>Materials</label>
-        <div id="materialList">
-            <div class="mat-row"><input type="checkbox" class="mat-check" value="PLA"> PLA <input type="number" class="mat-price hidden" placeholder="₹/g"></div>
-            <div class="mat-row"><input type="checkbox" class="mat-check" value="ABS"> ABS <input type="number" class="mat-price hidden" placeholder="₹/g"></div>
+            <button class="form-btn" onclick="submitAuth()">CONTINUE</button>
+            <span class="back-link" onclick="resetView()">← Back to choices</span>
         </div>
-        <button class="btn" onclick="submitPrinter()" style="margin-top:15px;">Save Printer</button>
-        <button class="btn" onclick="showDashboard()" style="background:#6c757d; margin-top:5px;">Cancel</button>
-    </div>
-</div>
 
-<script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQushhuiG5GqcpW_9rqLgscYxjEXrJXxV82vQeDcyUtxe_owbSy2_Op9tnPD9Ef9R-/exec"; 
-    let isSignup = false;
-    let sellerId = null;
+    </main>
 
-    function toggleAuth() {
-        isSignup = !isSignup;
-        document.getElementById('signupOnly').classList.toggle('hidden');
-        document.getElementById('authTitle').innerText = isSignup ? "Seller Sign-Up" : "Seller Sign-In";
-    }
+    <footer id="global-footer"></footer>
 
-    // Material Checkbox Logic
-    document.addEventListener('change', (e) => {
-        if(e.target.classList.contains('mat-check')) {
-            e.target.parentElement.querySelector('.mat-price').classList.toggle('hidden', !e.target.checked);
-        }
-    });
+    <script src="../js/navigation.js"></script>
+    <script>
+        let currentMode = '';
 
-    async function handleAuth() {
-        const payload = {
-            action: isSignup ? "signup" : "signin",
-            username: document.getElementById('username').value,
-            password: document.getElementById('password').value,
-            companyName: document.getElementById('companyName').value,
-            email: document.getElementById('email').value
-        };
-
-        // GAS requires a simple form-post for no-cors
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
-        const text = await response.text();
-
-        if (text.includes("Success")) {
-            const parts = text.split("|");
-            sellerId = parts[2];
-            document.getElementById('userDisplay').innerText = parts[3] || payload.username;
-            showDashboard();
-        } else {
-            alert(text || "Authentication failed. Please check your credentials.");
-        }
-    }
-
-    async function showDashboard() {
-        document.getElementById('authView').classList.add('hidden');
-        document.getElementById('printerView').classList.add('hidden');
-        document.getElementById('dashboardView').classList.remove('hidden');
-        loadFleet();
-    }
-
-    async function loadFleet() {
-        const container = document.getElementById('fleetContainer');
-        container.innerHTML = "Loading your fleet...";
-        
-        const response = await fetch(`${SCRIPT_URL}?action=getPrinters&sellerId=${sellerId}`);
-        const fleet = await response.json();
-        
-        container.innerHTML = fleet.length === 0 ? "<p>No printers found.</p>" : "";
-        fleet.forEach(p => {
-            const div = document.createElement('div');
-            div.className = 'printer-card';
-            div.innerHTML = `<strong>${p.brand} ${p.model}</strong><br>Base Rate: ₹${p.baseRate}<br>` +
-                            p.materials.map(m => `<span class="mat-tag">${m.name}: ₹${m.cost}</span>`).join('');
-            container.appendChild(div);
-        });
-    }
-
-    function showPrinterForm() {
-        document.getElementById('dashboardView').classList.add('hidden');
-        document.getElementById('printerView').classList.remove('hidden');
-    }
-
-    async function submitPrinter() {
-        const materials = [];
-        document.querySelectorAll('.mat-row').forEach(row => {
-            const check = row.querySelector('.mat-check');
-            if(check && check.checked) {
-                materials.push({ name: check.value, cost: row.querySelector('.mat-price').value });
+        function showForm(mode) {
+            currentMode = mode;
+            document.getElementById('choice-view').style.display = 'none';
+            document.getElementById('auth-form-container').style.display = 'block';
+            
+            if(mode === 'seller') {
+                document.getElementById('form-title').innerText = "Maker Registration";
+                document.getElementById('form-subtitle').innerText = "Start fulfilling 3D printing orders in your city.";
+                document.getElementById('phone-group').style.display = 'block';
+            } else {
+                document.getElementById('form-title').innerText = "User Login";
+                document.getElementById('form-subtitle').innerText = "Enter your email to access your dashboard.";
+                document.getElementById('phone-group').style.display = 'none';
             }
-        });
+        }
 
-        const payload = {
-            action: "addPrinter",
-            sellerId: sellerId,
-            brand: document.getElementById('brand').value,
-            model: document.getElementById('model').value,
-            baseRate: document.getElementById('baseRate').value,
-            materials: materials
-        };
+        function resetView() {
+            document.getElementById('choice-view').style.display = 'grid';
+            document.getElementById('auth-form-container').style.display = 'none';
+        }
 
-        await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-        alert("Printer Added!");
-        showDashboard();
-    }
-</script>
+        function submitAuth() {
+            const email = document.getElementById('auth-email').value;
+            if(!email.includes('@')) { alert("Valid email required"); return; }
+            
+            // This is where we will use the SAME App Script logic
+            alert("Connection to Google Sheet (App) pending configuration...");
+        }
+    </script>
 </body>
 </html>
