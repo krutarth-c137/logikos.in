@@ -6,80 +6,84 @@
     <title>Community | Logikos</title>
     <link rel="stylesheet" href="../css/main.css">
     <style>
-        body, html { height: 100%; overflow: hidden; }
-
-        .community-container {
+        body, html { height: 100%; overflow: hidden; background: #fff; }
+        
+        .community-wrapper {
+            margin-top: 80px;
+            height: calc(100vh - 140px);
             display: flex;
             justify-content: center;
             align-items: center;
-            height: calc(100vh - 140px);
-            margin-top: 80px;
-            padding: 0 5%;
+            position: relative;
         }
 
-        /* Initial Choice View */
-        .gateway-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            width: 100%;
-            max-width: 900px;
-        }
-
-        .choice-card {
-            border: 2px solid #1a1a1a;
-            padding: 60px 40px;
-            text-align: center;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .choice-card:hover {
-            background: #1a1a1a;
-            color: white;
-        }
-
-        .choice-card h2 { margin-bottom: 15px; text-transform: uppercase; }
-
-        /* Registration/Login Form (Hidden by default) */
-        #auth-form-container {
-            display: none;
-            width: 100%;
-            max-width: 400px;
-            border: 2px solid #1a1a1a;
-            padding: 40px;
-            background: #fff;
-        }
-
+        /* --- STAGE 0: APPROVED AUTH GATE --- */
+        .gateway-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; width: 100%; max-width: 900px; }
+        .choice-card { border: 2px solid #1a1a1a; padding: 60px 40px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .choice-card:hover { background: #1a1a1a; color: white; }
+        #auth-form-container { display: none; width: 100%; max-width: 400px; border: 2px solid #1a1a1a; padding: 40px; background: #fff; }
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
         .form-group input { width: 100%; padding: 12px; border: 1px solid #ccc; }
 
-        .form-btn {
-            width: 100%;
-            padding: 15px;
-            background: #1a1a1a;
-            color: white;
-            border: none;
+        /* --- STAGE 1: THE WELCOME --- */
+        #welcome-screen { display: none; text-align: center; width: 100%; max-width: 900px; }
+        .card-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 40px; }
+        .action-card {
+            border: 2px solid #1a1a1a;
+            padding: 60px 20px;
             font-weight: bold;
+            font-size: 1.2rem;
             cursor: pointer;
+            transition: 0.2s;
+            background: #fff;
+        }
+        .action-card:hover { background: #1a1a1a; color: #fff; }
+
+        /* --- STAGE 2 & 3: THE CROSSHAIR SYSTEM --- */
+        #crosshair-system {
+            width: 100%;
+            height: 100%;
+            display: none;
+            position: relative;
+            overflow: hidden;
         }
 
-        .back-link {
-            display: block;
-            margin-top: 20px;
-            text-align: center;
-            text-decoration: underline;
-            cursor: pointer;
-            font-size: 0.9rem;
+        .axis { position: absolute; background: #000; transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .v-axis { width: 4px; height: 80%; left: 50%; top: 10%; transform: translateX(-50%); }
+        .h-axis { height: 4px; width: 80%; top: 50%; left: 10%; transform: translateY(-50%); }
+
+        .center-dot {
+            position: absolute; width: 12px; height: 12px; background: red; border-radius: 50%;
+            left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 10;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
+        .quadrant {
+            position: absolute; width: 40%; height: 40%; display: flex;
+            align-items: center; justify-content: center; cursor: pointer;
+            font-weight: bold; font-size: 1.5rem; transition: 0.3s;
+        }
+        .quadrant:hover { color: #888; }
+        .q1 { top: 5%; right: 5%; } 
+        .q2 { top: 5%; left: 5%; }  
+        .q3 { bottom: 5%; left: 5%; } 
+        .q4 { bottom: 5%; right: 5%; }
+
+        #quad-content { position: absolute; display: none; padding: 40px; max-width: 500px; transition: 0.5s; }
+
+        /* Movement States */
+        .move-q1 .v-axis { left: 10%; height: 30%; } .move-q1 .h-axis { top: 90%; width: 30%; } .move-q1 .center-dot { left: 10%; top: 90%; }
+        .move-q2 .v-axis { left: 90%; height: 30%; } .move-q2 .h-axis { top: 90%; width: 30%; } .move-q2 .center-dot { left: 90%; top: 90%; }
+        .move-q3 .v-axis { left: 90%; height: 30%; } .move-q3 .h-axis { top: 10%; width: 30%; } .move-q3 .center-dot { left: 90%; top: 10%; }
+        .move-q4 .v-axis { left: 10%; height: 30%; } .move-q4 .h-axis { top: 10%; width: 30%; } .move-q4 .center-dot { left: 10%; top: 10%; }
     </style>
 </head>
 <body>
 
     <header id="global-header"></header>
 
-    <main class="community-container">
+    <div class="community-wrapper">
         
         <div id="choice-view" class="gateway-grid">
             <div class="choice-card" onclick="showForm('seller')">
@@ -94,57 +98,93 @@
 
         <div id="auth-form-container">
             <h2 id="form-title">Join as Maker</h2>
-            <p id="form-subtitle" style="margin-bottom: 20px; font-size: 0.9rem; color: #666;"></p>
-            
-            <div class="form-group">
+            <div class="form-group" style="margin-top: 20px;">
                 <label>Email Address</label>
                 <input type="email" id="auth-email" placeholder="name@email.com">
             </div>
-            
-            <div class="form-group" id="phone-group">
-                <label>Phone Number (Optional)</label>
-                <input type="tel" id="auth-phone" placeholder="+91 ...">
-            </div>
-
-            <button class="form-btn" onclick="submitAuth()">CONTINUE</button>
-            <span class="back-link" onclick="resetView()">← Back to choices</span>
+            <button class="action-card" style="width: 100%; padding: 20px;" onclick="submitAuth()">CONTINUE</button>
+            <p onclick="location.reload()" style="cursor:pointer; text-align:center; margin-top:15px; text-decoration:underline; font-size:0.8rem;">Back to choices</p>
         </div>
+        
+        <section id="welcome-screen">
+            <h1>Welcome to the Logikos.in community.</h1>
+            <p>What are you feeling today?</p>
+            <div class="card-row">
+                <button class="action-card" onclick="initCrosshair()">DESIGN</button>
+                <button class="action-card" onclick="initCrosshair()">MAKE</button>
+                <button class="action-card" onclick="initCrosshair()">MANAGE</button>
+            </div>
+        </section>
 
-    </main>
+        <section id="crosshair-system">
+            <div class="v-axis axis"></div>
+            <div class="h-axis axis"></div>
+            <div class="center-dot"></div>
+
+            <div class="quadrant q1" onclick="focusQuad(1, 'INNOVATE', 'Exploring positive-positive growth and new design iterations.')">Q1: INNOVATE</div>
+            <div class="quadrant q2" onclick="focusQuad(2, 'ANALYZE', 'Critical negative-positive assessment of current constraints.')">Q2: ANALYZE</div>
+            <div class="quadrant q3" onclick="focusQuad(3, 'STABILIZE', 'Addressing core fundamentals in the negative-negative zone.')">Q3: STABILIZE</div>
+            <div class="quadrant q4" onclick="focusQuad(4, 'PRODUCE', 'Positive output generation through optimized manufacturing.')">Q4: PRODUCE</div>
+
+            <div id="quad-content">
+                <h2 id="q-title" style="font-size: 2.5rem; margin-bottom: 20px;">TITLE</h2>
+                <p id="q-desc" style="line-height: 1.6; font-size: 1.1rem;">Description goes here.</p>
+                <button class="action-card" style="margin-top: 30px; width: auto; padding: 10px 30px; font-size: 1rem;" onclick="resetCrosshair()">BACK</button>
+            </div>
+        </section>
+
+    </div>
 
     <footer id="global-footer"></footer>
-
     <script src="../js/navigation.js"></script>
-    <script>
-        let currentMode = '';
 
+    <script>
+        // --- AUTH LOGIC ---
         function showForm(mode) {
-            currentMode = mode;
             document.getElementById('choice-view').style.display = 'none';
             document.getElementById('auth-form-container').style.display = 'block';
-            
-            if(mode === 'seller') {
-                document.getElementById('form-title').innerText = "Maker Registration";
-                document.getElementById('form-subtitle').innerText = "Start fulfilling 3D printing orders in your city.";
-                document.getElementById('phone-group').style.display = 'block';
-            } else {
-                document.getElementById('form-title').innerText = "User Login";
-                document.getElementById('form-subtitle').innerText = "Enter your email to access your dashboard.";
-                document.getElementById('phone-group').style.display = 'none';
-            }
-        }
-
-        function resetView() {
-            document.getElementById('choice-view').style.display = 'grid';
-            document.getElementById('auth-form-container').style.display = 'none';
+            document.getElementById('form-title').innerText = mode === 'seller' ? "Maker Registration" : "User Login";
         }
 
         function submitAuth() {
             const email = document.getElementById('auth-email').value;
-            if(!email.includes('@')) { alert("Valid email required"); return; }
-            
-            // This is where we will use the SAME App Script logic
-            alert("Connection to Google Sheet (App) pending configuration...");
+            if(email.includes('@')) {
+                // Approved: Proceed to Stage 1 (Welcome Cards)
+                document.getElementById('auth-form-container').style.display = 'none';
+                document.getElementById('welcome-screen').style.display = 'block';
+            } else {
+                alert("Please enter a valid email address.");
+            }
+        }
+
+        // --- DASHBOARD LOGIC ---
+        function initCrosshair() {
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('crosshair-system').style.display = 'block';
+        }
+
+        function focusQuad(num, title, desc) {
+            const system = document.getElementById('crosshair-system');
+            const content = document.getElementById('quad-content');
+            system.className = 'move-q' + num;
+            document.querySelectorAll('.quadrant').forEach(q => q.style.display = 'none');
+            content.style.display = 'block';
+            document.getElementById('q-title').innerText = title;
+            document.getElementById('q-desc').innerText = desc;
+
+            // Layout mapping
+            content.style.top = (num === 1 || num === 2) ? "10%" : "auto";
+            content.style.bottom = (num === 3 || num === 4) ? "10%" : "auto";
+            content.style.left = (num === 1 || num === 4) ? "20%" : "auto";
+            content.style.right = (num === 2 || num === 3) ? "20%" : "auto";
+            content.style.textAlign = (num === 1 || num === 4) ? "left" : "right";
+        }
+
+        function resetCrosshair() {
+            const system = document.getElementById('crosshair-system');
+            system.className = '';
+            document.getElementById('quad-content').style.display = 'none';
+            document.querySelectorAll('.quadrant').forEach(q => q.style.display = 'flex');
         }
     </script>
 </body>
