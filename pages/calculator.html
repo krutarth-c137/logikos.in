@@ -6,100 +6,110 @@
     <title>Cost Estimator | Logikos</title>
     <link rel="stylesheet" href="../css/main.css">
     <style>
-        /* Force single frame view */
-        body, html { height: 100%; overflow-x: hidden; }
+        /* No-Scroll Layout */
+        body, html { height: 100%; overflow: hidden; }
         
         .calc-wrapper {
-            display: flex;
-            flex-direction: column;
-            height: 100vh; /* One full screen */
-            padding-top: 80px; /* Space for fixed header */
-        }
-
-        .main-tool-zone {
             display: grid;
-            grid-template-columns: 1.5fr 1fr;
+            grid-template-columns: 1.2fr 1fr;
             gap: 20px;
-            padding: 20px;
-            flex: 0 0 calc(100vh - 80px); /* Exactly one screen height */
+            height: calc(100vh - 100px); /* Account for header/footer */
+            margin-top: 80px;
+            padding: 0 40px;
         }
 
-        /* Left side: Materials & Viewer */
-        .left-panel { display: flex; flex-direction: column; gap: 15px; }
+        /* Left Side: Materials & Viewer */
+        .left-panel { display: flex; flex-direction: column; gap: 10px; }
         
-        #viewer-container {
-            flex-grow: 1;
-            background: #eee;
-            border: 1px solid #ddd;
-            position: relative;
-            min-height: 250px; /* Smaller as requested */
-        }
-
-        .material-selection {
+        .material-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 8px;
         }
 
-        .mat-btn {
-            padding: 8px;
-            font-size: 0.8rem;
-            border: 1px solid #1a1a1a;
-            background: #fff;
-            cursor: pointer;
+        .viewer-box {
+            flex-grow: 1;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 300px;
         }
 
-        /* Right side: Controls */
+        /* Right Side: Inputs & Results */
         .right-panel {
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            background: #fdfdfd;
+            gap: 15px;
             padding: 20px;
+            background: #fff;
             border-left: 1px solid #eee;
         }
 
-        .input-box { width: 100%; padding: 10px; margin-top: 5px; }
+        /* Button Styling */
+        .btn-select {
+            padding: 10px 5px;
+            border: 1px solid #1a1a1a;
+            background: #fff;
+            cursor: pointer;
+            font-size: 0.85rem;
+            text-align: center;
+            width: 100%;
+            transition: 0.2s;
+        }
 
-        .calculate-btn {
+        .btn-select span { display: block; font-size: 0.75rem; color: #666; }
+        
+        /* Selection State */
+        .btn-select.active { background: #1a1a1a; color: #fff; }
+        .btn-select.active span { color: #ccc; }
+
+        /* Joke Materials: Non-Clickable */
+        .btn-joke { border: 1px dashed #ff4444; color: #ff4444; cursor: not-allowed; }
+
+        .infill-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+
+        /* Result Display Area */
+        #result-display {
+            background: #f9f9f9;
+            padding: 15px;
+            border: 1px solid #1a1a1a;
+            margin: 10px 0;
+            display: none; /* Hidden until Calculate */
+        }
+
+        .main-action-btn {
             background: #1a1a1a;
             color: white;
-            padding: 20px;
+            padding: 18px;
             border: none;
             font-weight: bold;
             cursor: pointer;
             width: 100%;
+            font-size: 1.1rem;
             margin-top: auto;
         }
 
-        /* Modal Styles */
-        #contact-modal {
+        /* Modal & Checkout Screen */
+        #modal, #checkout-screen {
             display: none;
             position: fixed;
             z-index: 2000;
             left: 0; top: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.7);
+            background: white; /* Full screen takeover for checkout */
         }
 
-        .modal-content {
-            background: white;
-            margin: 15% auto;
-            padding: 30px;
-            width: 400px;
-            border-radius: 5px;
-        }
+        #modal { background: rgba(0,0,0,0.8); }
+        .modal-box { background: #fff; margin: 10% auto; padding: 30px; width: 400px; }
 
-        /* Results Zone (Appears on scroll) */
-        .results-section {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: #fff;
+        .checkout-message {
+            text-align: center;
+            padding: 10% 20px;
+            max-width: 600px;
+            margin: auto;
         }
-
-        #result-viewer { width: 60%; height: 50%; background: #f0f0f0; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -107,85 +117,122 @@
     <header id="global-header"></header>
 
     <div class="calc-wrapper">
-        <section class="main-tool-zone">
-            <div class="left-panel">
-                <h3>Select Material</h3>
-                <div class="material-selection">
-                    <button class="mat-btn">PLA</button>
-                    <button class="mat-btn">ABS</button>
-                    <button class="mat-btn">PETG</button>
-                    <button class="mat-btn">Nylon</button>
-                    <button class="mat-btn">TPU</button>
-                    <button class="mat-btn">Resin</button>
-                    <button class="mat-btn">Polycarbonate</button>
-                    <button class="mat-btn">Carbon Fiber</button>
-                    <button class="mat-btn" style="color:red">Unobtanium</button>
-                    <button class="mat-btn" style="color:red">Vibranium</button>
-                </div>
-                
-                <div id="viewer-container">
-                    <p id="viewer-status" style="text-align:center; margin-top:100px;">Upload an STL to view model</p>
-                    </div>
+        <div class="left-panel">
+            <h3>Select Material</h3>
+            <div class="material-grid">
+                <button class="btn-select mat-opt" onclick="selectMat(this)">PLA</button>
+                <button class="btn-select mat-opt" onclick="selectMat(this)">ABS</button>
+                <button class="btn-select mat-opt" onclick="selectMat(this)">PETG</button>
+                <button class="btn-select mat-opt" onclick="selectMat(this)">Nylon</button>
+                <button class="btn-select mat-opt" onclick="selectMat(this)">TPU</button>
+                <button class="btn-select mat-opt" onclick="selectMat(this)">Resin</button>
+                <button class="btn-select mat-opt" onclick="selectMat(this)">Polycarbonate</button>
+                <button class="btn-select mat-opt" onclick="selectMat(this)">Carbon Fiber</button>
+                <button class="btn-select btn-joke">Unobtanium</button>
+                <button class="btn-select btn-joke">Vibranium</button>
+            </div>
+            <div class="viewer-box" id="viewer">
+                <p id="v-status">Upload an STL to view model</p>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div>
+                <label>Upload STL</label>
+                <input type="file" id="file-input" onchange="handleUpload(this)" style="margin-top:10px;">
             </div>
 
-            <div class="right-panel">
-                <div>
-                    <label>Upload STL</label>
-                    <input type="file" id="stl-upload" class="input-box" accept=".stl">
+            <div>
+                <label>Infill Selection</label>
+                <div class="infill-grid" style="margin-top:10px;">
+                    <button class="btn-select inf-opt" onclick="selectInf(this)">Min.<span>(20)</span></button>
+                    <button class="btn-select inf-opt" onclick="selectInf(this)">More<span>(45)</span></button>
+                    <button class="btn-select inf-opt" onclick="selectInf(this)">Functional<span>(80)</span></button>
+                    <button class="btn-select inf-opt" onclick="selectInf(this)">Solid<span>(100)</span></button>
                 </div>
-                <div>
-                    <label>Infill Percentage</label>
-                    <input type="range" min="0" max="100" value="20" class="input-box">
-                </div>
-                <button class="calculate-btn" onclick="showModal()">CALCULATE</button>
             </div>
-        </section>
 
-        <section class="results-section" id="results">
-            <div id="result-viewer">
-                <p style="text-align:center; padding-top:20%;">Final 3D View</p>
+            <div id="result-display">
+                <p><strong>Estimated Weight:</strong> <span id="weight">--</span> g</p>
+                <p><strong>Estimated Cost:</strong> ₹ <span id="cost">--</span></p>
+                <p style="font-size: 0.7rem; color: #888;">Actual cost may vary 5-10%</p>
             </div>
-            <h2>Estimated Cost: ₹ <span id="final-cost">---</span></h2>
-            <p>Disclaimer: Actual cost may vary 5–10%</p>
-        </section>
+
+            <button class="main-action-btn" id="action-btn" onclick="handleMainAction()">CALCULATE</button>
+        </div>
     </div>
 
-    <div id="contact-modal">
-        <div class="modal-content">
-            <h3>User Information</h3>
-            <p>Please provide details to see the calculation.</p>
-            <input type="email" id="modal-email" placeholder="Email (Mandatory)*" class="input-box" required><br><br>
-            <input type="text" id="modal-city" placeholder="City Name" class="input-box"><br><br>
-            <input type="tel" id="modal-phone" placeholder="Phone Number" class="input-box"><br><br>
-            <button class="calculate-btn" onclick="submitContact()">SUBMIT</button>
+    <div id="modal">
+        <div class="modal-box">
+            <h3>Enter Details</h3>
+            <input type="email" id="u-email" placeholder="Email (Mandatory)*" style="width:100%; padding:10px; margin:10px 0;">
+            <input type="text" id="u-city" placeholder="City" style="width:100%; padding:10px; margin:10px 0;">
+            <input type="tel" id="u-phone" placeholder="Phone" style="width:100%; padding:10px; margin:10px 0;">
+            <button class="main-action-btn" onclick="submitModal()">SUBMIT</button>
+        </div>
+    </div>
+
+    <div id="checkout-screen">
+        <div class="checkout-message">
+            <h2>Your order has been placed on logikos.in</h2>
+            <p style="margin: 20px 0;">Thank you for your order. Go back if you didn't try changing the material multiple times. If you did, do join to our community.</p>
+            <button class="btn-select" style="width:auto; padding: 10px 30px;" onclick="location.reload()">Back to Estimator</button>
         </div>
     </div>
 
     <footer id="global-footer"></footer>
-
     <script src="../js/navigation.js"></script>
+
     <script>
-        function showModal() {
-            document.getElementById('contact-modal').style.display = 'block';
+        let isCalculated = false;
+
+        function selectMat(btn) {
+            document.querySelectorAll('.mat-opt').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            resetToCalculate();
         }
 
-        function submitContact() {
-            const email = document.getElementById('modal-email').value;
-            if(!email) { alert("Email is mandatory"); return; }
-            
-            // Close modal and scroll to results
-            document.getElementById('contact-modal').style.display = 'none';
-            document.getElementById('final-cost').innerText = (Math.random() * 1000).toFixed(2); // Dummy calculation
-            
-            // Allow scrolling to see the result
-            document.querySelector('.calc-wrapper').style.overflowY = 'scroll';
-            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        function selectInf(btn) {
+            document.querySelectorAll('.inf-opt').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            resetToCalculate();
         }
 
-        // Logic for file upload showing viewer text
-        document.getElementById('stl-upload').onchange = function(e) {
-            document.getElementById('viewer-status').innerText = "Model: " + e.target.files[0].name + " loaded.";
-            // Here you would trigger the actual 3D render in brain.js
+        function handleUpload(input) {
+            if(input.files[0]) {
+                document.getElementById('v-status').innerHTML = `<strong>${input.files[0].name}</strong><br>Model Loaded Successfully`;
+                resetToCalculate();
+            }
+        }
+
+        function resetToCalculate() {
+            if(isCalculated) {
+                isCalculated = false;
+                document.getElementById('action-btn').innerText = "CALCULATE";
+                document.getElementById('result-display').style.display = "none";
+            }
+        }
+
+        function handleMainAction() {
+            if(!isCalculated) {
+                document.getElementById('modal').style.display = 'block';
+            } else {
+                document.getElementById('checkout-screen').style.display = 'block';
+            }
+        }
+
+        function submitModal() {
+            const email = document.getElementById('u-email').value;
+            if(!email.includes('@')) { alert("Valid Email is mandatory"); return; }
+            
+            document.getElementById('modal').style.display = 'none';
+            isCalculated = true;
+            
+            // Show Dummy Results
+            document.getElementById('weight').innerText = (Math.random() * 200 + 50).toFixed(1);
+            document.getElementById('cost').innerText = (Math.random() * 500 + 100).toFixed(2);
+            document.getElementById('result-display').style.display = 'block';
+            document.getElementById('action-btn').innerText = "CHECKOUT";
         }
     </script>
 </body>
