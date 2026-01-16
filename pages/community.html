@@ -158,9 +158,11 @@
 
         // --- DASHBOARD LOGIC ---
         function initCrosshair() {
-            document.getElementById('welcome-screen').style.display = 'none';
-            document.getElementById('crosshair-system').style.display = 'block';
-        }
+    document.getElementById('welcome-screen').style.display = 'none';
+    document.getElementById('crosshair-system').style.display = 'block';
+    // Tell the browser we moved to the Crosshair
+    history.pushState({view: 'crosshair'}, "");
+}
 
         function focusQuad(num, title, desc) {
             const system = document.getElementById('crosshair-system');
@@ -196,6 +198,21 @@
         welcome.style.display = 'block';
     }
 }
+        window.onpopstate = function(event) {
+    // Hide everything first
+    document.getElementById('welcome-screen').style.display = 'none';
+    document.getElementById('crosshair-system').style.display = 'none';
+    document.getElementById('choice-view').style.display = 'none';
+    document.getElementById('auth-form-container').style.display = 'none';
+
+    if (event.state && event.state.view === 'crosshair') {
+        document.getElementById('crosshair-system').style.display = 'block';
+    } else if (event.state && event.state.view === 'welcome') {
+        document.getElementById('welcome-screen').style.display = 'block';
+    } else {
+        document.getElementById('choice-view').style.display = 'grid';
+    }
+};
     </script>
 </body>
 </html>
