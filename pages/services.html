@@ -2,24 +2,77 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Services | Logikos.in</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Services | Logikos</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <style>
+        /* Each card takes 35% of the screen height to force scrolling for the 4th item */
+        .service-card {
+            min-height: 35vh;
+            margin-bottom: 40px;
+            padding: 30px;
+            border-left: 5px solid #1a1a1a;
+            background: #fafafa;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .service-card h2 {
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .service-desc {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 0.9rem;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .highlight { color: #1a1a1a; font-weight: bold; }
+    </style>
 </head>
 <body>
-    <nav>
-        <div class="logo">LOGIKOS.IN</div>
-        <ul><li><a href="index.html">Home</a></li><li><a href="services.html">Services</a></li><li><a href="shop.html">Shop</a></li><li><a href="calculator.html">Cost Estimator</a></li></ul>
-    </nav>
 
-    <div class="container">
-        <h1 style="text-align:center;">Our Services</h1>
-        <div class="product-grid">
-            <div class="card"><h3>3D Printing</h3><p>High-quality additive manufacturing for prototypes and parts.</p></div>
-            <div class="card"><h3>Product Design</h3><p>Conceptualizing and designing products with a focus on usability.</p></div>
-            <div class="card"><h3>DFM</h3><p>Design for Manufacturing: Optimizing designs for efficient production.</p></div>
-            <div class="card"><h3>Operations Design</h3><p>Designing workflows and systems for operational excellence.</p></div>
-            <div class="card"><h3>Manufacturing Sourcing</h3><p>Helping you find the right partners to scale your production.</p></div>
+    <header id="global-header"></header>
+
+    <main>
+        <h1>Our Services</h1>
+        <p style="margin-bottom: 40px;">Technical excellence across multiple domains.</p>
+
+        <div class="service-card">
+            <h2>1. Lean Transformation</h2>
+            <div class="service-desc">
+                TPS, Just-In-Time, Jidoka, Kaizen, Heijunka, Muda, Mura, Muri, Genchi-Genbutsu, Kanban, Poka-Yoke, Andon, Hansei, Nemawashi, Standardized-Work, Visual-Management, Pull-System, Takt-Time, Continuous-Flow, SMED, 5S, Ishikawa, Root-Cause-Analysis, PDCA, Gemba, Hoshin-Kanri, Value-Stream-Mapping, Total-Productive-Maintenance, JIT, Obeya, Chaku-Chaku, A3-Reporting, Supermarket-Concept, Autonomation, Waste-Elimination, One-Piece-Flow, Cell-Manufacturing, Bottleneck-Analysis, Cycle-Time, Lead-Time, Quality-Circles, Supplier-Integration, Socio-Technical-System, Operational-Excellence, Lean-Thinking, Respect-For-People, Zero-Defects, Single-Minute-Exchange-Of-Die, Right-First-Time, Six-Sigma.
+            </div>
         </div>
-    </div>
+
+        <div class="service-card">
+            <h2>2. Product Design</h2>
+            <div class="service-desc">
+                Vehicle-Dynamics, Slip-Angle, Understeer-Gradient, Roll-Center, Pitch-and-Bounce, Aerodynamics, Drag-Coefficient, Downforce, Venturi-Effect, CFD, Sheet-Metal-Fabrication, Bend-Allowance, K-Factor, Hemming, Deep-Drawing, Punching-and-Blanking, Stress-Strain-Analysis, FEA, Kinematics, Suspension-Geometry, Camber-Gain, Ackerman-Steering, Ground-Effect, Boundary-Layer, Structural-Rigidity, Weight-Distribution, CAD-Modeling, DFM, DFA, Material-Selection, Surface-Finish, Tolerance-Stackup, Prototyping, Mechanical-Integration, Thermal-Management, Chassis-Stiffness, <span class="highlight">Exchange-Traded-Funds, Fixed-Deposit</span>, Cost-Benefit-Analysis, Lifecycle-Management, Product-Roadmap, Ergonomics, Assembly-Line-Optimization, Industrial-Design, Mechatronics, Automotive-Engineering, Fluid-Mechanics, Elasticity, Sheet-Metal-Forming, Product-Validation.
+            </div>
+        </div>
+
+        <div class="service-card">
+            <h2>3. 3D-Printing</h2>
+            <div class="service-desc">
+                Additive-Manufacturing, Fused-Deposition-Modeling, Stereolithography, Selective-Laser-Sintering, CAD-Model, STL-File, G-Code, Layer-Height, Infill-Density, Support-Structures, Thermoplastics, PLA, ABS, PETG, Photopolymer-Resin, Slicing-Software, Build-Plate-Adhesion, Rapid-Prototyping, Extrusion, Nozzle-Diameter, Heated-Bed, Warp-Prevention, 4D-Printing, Shape-Memory-Alloys, Post-Processing, Curing, Lattice-Structures, Topology-Optimization, Toolpath-Generation, Multi-Material-Printing, Desktop-Manufacturing, On-Demand-Production, Customization, Direct-Metal-Laser-Sintering, Bio-Printing, Filament-Spool, Powder-Bed-Fusion, Binder-Jetting, Layer-by-Layer, Digital-Inventory, Generative-Design, Print-Speed, Travel-Speed, Retraction-Settings, Overhang-Angle, Cooling-Fans, Stepper-Motors, Firmware-Optimization, Precision-Engineering, Volumetric-Extrusion.
+            </div>
+        </div>
+
+        <div class="service-card">
+            <h2>4. Aur kya chahiye</h2>
+            <div class="service-desc">
+                Jo bhi chahiye, Shop me mil jayega.
+            </div>
+        </div>
+    </main>
+
+    <footer id="global-footer"></footer>
+
+    <script src="../js/navigation.js"></script>
 </body>
 </html>
