@@ -2,106 +2,191 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cost Estimator | Logikos</title>
     <link rel="stylesheet" href="../css/main.css">
     <style>
-        .calc-container { display: flex; flex-direction: column; gap: 20px; max-width: 900px; margin: auto; }
-        .row { display: flex; gap: 20px; align-items: flex-end; }
-        .input-group { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+        /* Force single frame view */
+        body, html { height: 100%; overflow-x: hidden; }
         
-        /* 3D Viewer Area */
-        #viewer-frame { 
-            width: 100%; 
-            height: 400px; 
-            background: #eee; 
-            border: 2px dashed #ccc; 
-            display: flex; 
-            align-items: center; 
+        .calc-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* One full screen */
+            padding-top: 80px; /* Space for fixed header */
+        }
+
+        .main-tool-zone {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 20px;
+            padding: 20px;
+            flex: 0 0 calc(100vh - 80px); /* Exactly one screen height */
+        }
+
+        /* Left side: Materials & Viewer */
+        .left-panel { display: flex; flex-direction: column; gap: 15px; }
+        
+        #viewer-container {
+            flex-grow: 1;
+            background: #eee;
+            border: 1px solid #ddd;
+            position: relative;
+            min-height: 250px; /* Smaller as requested */
+        }
+
+        .material-selection {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        .mat-btn {
+            padding: 8px;
+            font-size: 0.8rem;
+            border: 1px solid #1a1a1a;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        /* Right side: Controls */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: #fdfdfd;
+            padding: 20px;
+            border-left: 1px solid #eee;
+        }
+
+        .input-box { width: 100%; padding: 10px; margin-top: 5px; }
+
+        .calculate-btn {
+            background: #1a1a1a;
+            color: white;
+            padding: 20px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: auto;
+        }
+
+        /* Modal Styles */
+        #contact-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 15% auto;
+            padding: 30px;
+            width: 400px;
+            border-radius: 5px;
+        }
+
+        /* Results Zone (Appears on scroll) */
+        .results-section {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
             justify-content: center;
+            align-items: center;
+            background: #fff;
         }
 
-        /* Material Selection Grid */
-        .material-grid { 
-            display: grid; 
-            grid-template-columns: repeat(5, 1fr); 
-            gap: 10px; 
-            margin: 10px 0; 
-        }
-        .mat-btn { 
-            padding: 10px; 
-            border: 1px solid #1a1a1a; 
-            background: white; 
-            cursor: pointer; 
-            text-align: center;
-        }
-        .mat-btn.active { background: #1a1a1a; color: white; }
-
-        .result-zone { 
-            padding: 20px; 
-            background: #f9f9f9; 
-            border: 1px solid #ddd; 
-            text-align: center; 
-        }
-        .checkout-btn { 
-            background: #28a745; 
-            color: white; 
-            padding: 15px 30px; 
-            border: none; 
-            font-weight: bold; 
-            cursor: pointer; 
-            margin-top: 10px;
-        }
+        #result-viewer { width: 60%; height: 50%; background: #f0f0f0; margin-bottom: 20px; }
     </style>
 </head>
 <body>
+
     <header id="global-header"></header>
 
-    <main class="calc-container">
-        <h1>3D Print Cost Estimator</h1>
-
-        <div class="row">
-            <div class="input-group">
-                <label>Upload STL</label>
-                <input type="file" id="stl-upload" accept=".stl">
+    <div class="calc-wrapper">
+        <section class="main-tool-zone">
+            <div class="left-panel">
+                <h3>Select Material</h3>
+                <div class="material-selection">
+                    <button class="mat-btn">PLA</button>
+                    <button class="mat-btn">ABS</button>
+                    <button class="mat-btn">PETG</button>
+                    <button class="mat-btn">Nylon</button>
+                    <button class="mat-btn">TPU</button>
+                    <button class="mat-btn">Resin</button>
+                    <button class="mat-btn">Polycarbonate</button>
+                    <button class="mat-btn">Carbon Fiber</button>
+                    <button class="mat-btn" style="color:red">Unobtanium</button>
+                    <button class="mat-btn" style="color:red">Vibranium</button>
+                </div>
+                
+                <div id="viewer-container">
+                    <p id="viewer-status" style="text-align:center; margin-top:100px;">Upload an STL to view model</p>
+                    </div>
             </div>
-            <div class="input-group">
-                <label>Infill (%)</label>
-                <select id="infill">
-                    <option value="15">15% (Light)</option>
-                    <option value="40">40% (Standard)</option>
-                    <option value="80">80% (Heavy)</option>
-                </select>
+
+            <div class="right-panel">
+                <div>
+                    <label>Upload STL</label>
+                    <input type="file" id="stl-upload" class="input-box" accept=".stl">
+                </div>
+                <div>
+                    <label>Infill Percentage</label>
+                    <input type="range" min="0" max="100" value="20" class="input-box">
+                </div>
+                <button class="calculate-btn" onclick="showModal()">CALCULATE</button>
             </div>
-        </div>
+        </section>
 
-        <label>Select Material</label>
-        <div class="material-grid">
-            <button class="mat-btn">PLA</button>
-            <button class="mat-btn">ABS</button>
-            <button class="mat-btn">PETG</button>
-            <button class="mat-btn">Resin</button>
-            <button class="mat-btn">Nylon</button>
-        </div>
+        <section class="results-section" id="results">
+            <div id="result-viewer">
+                <p style="text-align:center; padding-top:20%;">Final 3D View</p>
+            </div>
+            <h2>Estimated Cost: ₹ <span id="final-cost">---</span></h2>
+            <p>Disclaimer: Actual cost may vary 5–10%</p>
+        </section>
+    </div>
 
-        <div id="viewer-frame">
-            <p>3D Viewer will load here after upload</p>
+    <div id="contact-modal">
+        <div class="modal-content">
+            <h3>User Information</h3>
+            <p>Please provide details to see the calculation.</p>
+            <input type="email" id="modal-email" placeholder="Email (Mandatory)*" class="input-box" required><br><br>
+            <input type="text" id="modal-city" placeholder="City Name" class="input-box"><br><br>
+            <input type="tel" id="modal-phone" placeholder="Phone Number" class="input-box"><br><br>
+            <button class="calculate-btn" onclick="submitContact()">SUBMIT</button>
         </div>
-
-        <div id="contact-gate" style="display:none;" class="row">
-            <input type="email" placeholder="Email" id="user-email">
-            <input type="text" placeholder="City" id="user-city">
-            <button class="btn-box" id="calc-trigger">CALCULATE</button>
-        </div>
-
-        <div class="result-zone">
-            <h3>Estimated Cost: <span id="cost-display">₹ 0.00</span></h3>
-            <p><small>Disclaimer: Actual cost may vary 5–10%</small></p>
-            <button class="checkout-btn">CHECKOUT / INQUIRY</button>
-        </div>
-    </main>
+    </div>
 
     <footer id="global-footer"></footer>
+
     <script src="../js/navigation.js"></script>
-    <script src="../js/brain.js"></script>
+    <script>
+        function showModal() {
+            document.getElementById('contact-modal').style.display = 'block';
+        }
+
+        function submitContact() {
+            const email = document.getElementById('modal-email').value;
+            if(!email) { alert("Email is mandatory"); return; }
+            
+            // Close modal and scroll to results
+            document.getElementById('contact-modal').style.display = 'none';
+            document.getElementById('final-cost').innerText = (Math.random() * 1000).toFixed(2); // Dummy calculation
+            
+            // Allow scrolling to see the result
+            document.querySelector('.calc-wrapper').style.overflowY = 'scroll';
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Logic for file upload showing viewer text
+        document.getElementById('stl-upload').onchange = function(e) {
+            document.getElementById('viewer-status').innerText = "Model: " + e.target.files[0].name + " loaded.";
+            // Here you would trigger the actual 3D render in brain.js
+        }
+    </script>
 </body>
 </html>
