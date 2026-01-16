@@ -116,7 +116,7 @@
 
     <header id="global-header"></header>
 
-    <div class="calc-wrapper">
+    <div class="calc-wrapper" id="calculator-view">
         <div class="left-panel">
             <h3>Select Material</h3>
             <div class="material-grid">
@@ -162,21 +162,21 @@
         </div>
     </div>
 
-    <div id="modal">
-        <div class="modal-box">
+    <div id="success-view" style="display:none; text-align:center; padding: 100px 20px; height: calc(100vh - 140px); margin-top: 80px;">
+        <h2>Your order has been placed on logikos.in</h2>
+        <p style="margin: 20px 0; max-width: 600px; margin-left: auto; margin-right: auto;">
+            Thank you for your order. Go back if you didn't try changing the material multiple times. If you did, do join to our community.
+        </p>
+        <button class="btn-select" style="width:auto; padding: 10px 30px;" onclick="goBack()">Back to Estimator</button>
+    </div>
+
+    <div id="modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8);">
+        <div class="modal-box" style="background:#fff; margin:10% auto; padding:30px; width:400px;">
             <h3>Enter Details</h3>
             <input type="email" id="u-email" placeholder="Email (Mandatory)*" style="width:100%; padding:10px; margin:10px 0;">
             <input type="text" id="u-city" placeholder="City" style="width:100%; padding:10px; margin:10px 0;">
             <input type="tel" id="u-phone" placeholder="Phone" style="width:100%; padding:10px; margin:10px 0;">
             <button class="main-action-btn" onclick="submitModal()">SUBMIT</button>
-        </div>
-    </div>
-
-    <div id="checkout-screen">
-        <div class="checkout-message">
-            <h2>Your order has been placed on logikos.in</h2>
-            <p style="margin: 20px 0;">Thank you for your order. Go back if you didn't try changing the material multiple times. If you did, do join to our community.</p>
-            <button class="btn-select" style="width:auto; padding: 10px 30px;" onclick="location.reload()">Back to Estimator</button>
         </div>
     </div>
 
@@ -189,50 +189,67 @@
         function selectMat(btn) {
             document.querySelectorAll('.mat-opt').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            resetToCalculate();
+            updatePriceDisplay();
         }
 
         function selectInf(btn) {
             document.querySelectorAll('.inf-opt').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            resetToCalculate();
+            updatePriceDisplay();
         }
 
         function handleUpload(input) {
             if(input.files[0]) {
                 document.getElementById('v-status').innerHTML = `<strong>${input.files[0].name}</strong><br>Model Loaded Successfully`;
-                resetToCalculate();
+                updatePriceDisplay();
             }
         }
 
-        function resetToCalculate() {
-            if(isCalculated) {
-                isCalculated = false;
-                document.getElementById('action-btn').innerText = "CALCULATE";
-                document.getElementById('result-display').style.display = "none";
-            }
+        function updatePriceDisplay() {
+            // When user changes something, we show new price but change button to CALCULATE
+            isCalculated = false;
+            document.getElementById('action-btn').innerText = "CALCULATE";
+            
+            // Generate dummy values immediately so user sees changes
+            document.getElementById('weight').innerText = (Math.random() * 200 + 50).toFixed(1);
+            document.getElementById('cost').innerText = (Math.random() * 500 + 100).toFixed(2);
+            document.getElementById('result-display').style.display = 'block';
         }
 
         function handleMainAction() {
-            if(!isCalculated) {
-                document.getElementById('modal').style.display = 'block';
+            if (!isCalculated) {
+                // Check if we already have the user's email in session storage
+                const savedEmail = sessionStorage.getItem('userEmail');
+                if (savedEmail) {
+                    // Skip modal if already provided
+                    isCalculated = true;
+                    document.getElementById('action-btn').innerText = "CHECKOUT";
+                } else {
+                    document.getElementById('modal').style.display = 'block';
+                }
             } else {
-                document.getElementById('checkout-screen').style.display = 'block';
+                // Show success view (Header/Footer remain visible)
+                document.getElementById('calculator-view').style.display = 'none';
+                document.getElementById('success-view').style.display = 'block';
             }
         }
 
         function submitModal() {
             const email = document.getElementById('u-email').value;
-            if(!email.includes('@')) { alert("Valid Email is mandatory"); return; }
+            if (!email.includes('@')) { alert("Valid Email is mandatory"); return; }
+            
+            // Save to session so they aren't asked again
+            sessionStorage.setItem('userEmail', email);
             
             document.getElementById('modal').style.display = 'none';
             isCalculated = true;
-            
-            // Show Dummy Results
-            document.getElementById('weight').innerText = (Math.random() * 200 + 50).toFixed(1);
-            document.getElementById('cost').innerText = (Math.random() * 500 + 100).toFixed(2);
-            document.getElementById('result-display').style.display = 'block';
             document.getElementById('action-btn').innerText = "CHECKOUT";
+        }
+
+        function goBack() {
+            document.getElementById('success-view').style.display = 'none';
+            document.getElementById('calculator-view').style.display = 'grid';
+            // isCalculated remains true because they already providing info
         }
     </script>
 </body>
