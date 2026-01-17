@@ -24,9 +24,9 @@
         .choice-card { border: 2px solid #1a1a1a; padding: 60px 40px; text-align: center; cursor: pointer; transition: 0.3s; }
         .choice-card:hover { background: #1a1a1a; color: white; }
         #auth-form-container { display: none; width: 100%; max-width: 400px; border: 2px solid #1a1a1a; padding: 40px; background: #fff; text-align: center; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-group input { width: 100%; padding: 12px; border: 1px solid #ccc; }
+        
+        .auth-input { width: 100%; padding: 12px; border: 1px solid #ccc; margin-bottom: 10px; box-sizing: border-box; }
+        .signup-only { display: none; } /* Hidden by default, toggled by JS */
 
         /* --- STAGE 1: THE WELCOME --- */
         #welcome-screen { display: none; text-align: center; width: 100%; max-width: 900px; position: relative; }
@@ -99,16 +99,32 @@
         </div>
 
         <div id="auth-form-container">
-            <h2 id="form-title">Join as Maker</h2>
-            <p style="font-size: 0.8rem; margin: 10px 0; color: #666;">Sign in with Google to sync your printer data and track leads.</p>
+            <h2 id="form-title">Authentication</h2>
             
-            <div id="g_id_onload"
-                 data-client_id="358722822690-mq80rnmjvdva4s187hpk14i2er6cp7mn.apps.googleusercontent.com"
-                 data-callback="handleCredentialResponse">
+            <div id="custom-fields" style="margin-top:15px;">
+                <input type="text" id="reg-name" placeholder="Full Name" class="auth-input signup-only">
+                <input type="email" id="reg-email" placeholder="Email Address" class="auth-input">
+                <input type="password" id="reg-pass" placeholder="Password" class="auth-input">
+                <input type="text" id="reg-city" placeholder="City" class="auth-input signup-only">
+                <select id="reg-type" class="auth-input signup-only" style="width:100%; margin-bottom:10px; padding:12px; border: 1px solid #ccc;">
+                    <option value="">Select Type</option>
+                    <option value="Personal">Personal</option>
+                    <option value="Professional">Professional</option>
+                </select>
             </div>
-            <div class="g_id_signin" data-type="standard" style="display: flex; justify-content: center; margin-top: 20px;"></div>
 
-            <p onclick="location.reload()" style="cursor:pointer; text-align:center; margin-top:25px; text-decoration:underline; font-size:0.8rem;">Back to choices</p>
+            <button class="action-card" id="main-auth-btn" style="width:100%; padding:12px; margin-bottom:15px;" onclick="handleCustomAuth()">CONTINUE</button>
+
+            <div style="border-top: 1px solid #eee; padding-top:15px;">
+                <p style="font-size:0.7rem; color:#888; margin-bottom:10px;">OR USE</p>
+                <div id="g_id_onload" 
+                     data-client_id="358722822690-mq80rnmjvdva4s187hpk14i2er6cp7mn.apps.googleusercontent.com" 
+                     data-callback="handleGoogleAuth">
+                </div>
+                <div class="g_id_signin" data-type="standard" style="display: flex; justify-content: center;"></div>
+            </div>
+
+            <p onclick="location.reload()" style="cursor:pointer; margin-top:20px; text-decoration:underline; font-size:0.8rem;">Back to choices</p>
         </div>
         
         <section id="welcome-screen">
@@ -149,48 +165,100 @@
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbyNW7jdJPlBRKSScDxB0mvGz9XrbfUgvHYn9Rm0KBor3HbJSEJyzDu7Z_9MXJCY6jKn/exec";
+        let authMode = 'SIGN_UP'; 
 
-        // --- AUTH LOGIC ---
+        // --- AUTH UI LOGIC ---
         function showForm(mode) {
+            authMode = (mode === 'seller') ? 'SIGN_UP' : 'SIGN_IN';
+            
             document.getElementById('choice-view').style.display = 'none';
             document.getElementById('auth-form-container').style.display = 'block';
-            document.getElementById('form-title').innerText = mode === 'seller' ? "Maker Registration" : "User Login";
+            document.getElementById('form-title').innerText = (authMode === 'SIGN_UP') ? "Maker Registration" : "User Login";
+            document.getElementById('main-auth-btn').innerText = (authMode === 'SIGN_UP') ? "CREATE ACCOUNT" : "SIGN IN";
+            
+            // Toggle visibility of signup-only fields
+            const signupFields = document.querySelectorAll('.signup-only');
+            signupFields.forEach(el => el.style.display = (authMode === 'SIGN_UP' ? 'block' : 'none'));
         }
 
-        async function handleCredentialResponse(response) {
-            const responsePayload = parseJwt(response.credential);
-            
+        // --- AUTH SUBMISSION LOGIC ---
+
+        // Path 1: Manual ID/Password
+        async function handleCustomAuth() {
+            const email = document.getElementById('reg-email').value;
+            const pass = document.getElementById('reg-pass').value;
+
+            if(!email.includes('@')) { alert("Valid email required"); return; }
+            if(pass.length < 4) { alert("Password too short"); return; }
+
             const payload = {
                 action: "SIGN_UP_OR_IN",
-                email: responsePayload.email,
-                name: responsePayload.name
+                mode: authMode,
+                isGoogle: false,
+                email: email,
+                password: pass,
+                name: document.getElementById('reg-name').value,
+                city: document.getElementById('reg-city').value,
+                type: document.getElementById('reg-type').value
+            };
+            
+            await callBackend(payload);
+        }
+
+        // Path 2: Google Authentication
+        async function handleGoogleAuth(response) {
+            const user = parseJwt(response.credential);
+            let payload = {
+                action: "SIGN_UP_OR_IN",
+                mode: authMode,
+                isGoogle: true,
+                email: user.email,
+                name: user.name
             };
 
+            // If it's a new signup via Google, ask for missing metadata
+            if (authMode === 'SIGN_UP') {
+                const city = prompt("To complete your Maker profile, please enter your City:");
+                const type = prompt("Account Type (Personal or Professional):");
+                if (!city || !type) { alert("City and Type are required for registration."); return; }
+                payload.city = city;
+                payload.type = type;
+            }
+
+            await callBackend(payload);
+        }
+
+        // --- BACKEND COMMUNICATION ---
+        async function callBackend(payload) {
+            document.getElementById('main-auth-btn').innerText = "PROCESSING...";
+            document.getElementById('main-auth-btn').disabled = true;
+
             try {
-                // Fetch from App Script
                 const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const result = await res.json();
                 
                 if (result.status === "success") {
                     sessionStorage.setItem('userId', result.userId);
                     sessionStorage.setItem('userEmail', result.email);
-                    sessionStorage.setItem('userName', responsePayload.name);
-                    
+                    sessionStorage.setItem('userName', result.name || "Member");
                     showWelcome();
+                } else {
+                    alert("Error: " + result.message);
+                    document.getElementById('main-auth-btn').innerText = (authMode === 'SIGN_UP') ? "CREATE ACCOUNT" : "SIGN IN";
+                    document.getElementById('main-auth-btn').disabled = false;
                 }
             } catch (e) {
-                console.error("Auth failed", e);
-                // Fallback for beta testing if API fails
-                sessionStorage.setItem('userEmail', responsePayload.email);
-                showWelcome();
+                console.error("Connection error", e);
+                alert("Could not connect to server. Please check your internet.");
+                document.getElementById('main-auth-btn').disabled = false;
             }
         }
 
         function showWelcome() {
             document.getElementById('auth-form-container').style.display = 'none';
             document.getElementById('welcome-screen').style.display = 'block';
-            document.getElementById('display-name').innerText = sessionStorage.getItem('userName') || "Member";
-            document.getElementById('display-id').innerText = "ID: " + (sessionStorage.getItem('userId') || "PROVISIONAL");
+            document.getElementById('display-name').innerText = sessionStorage.getItem('userName');
+            document.getElementById('display-id').innerText = "ID: " + sessionStorage.getItem('userId');
             history.pushState({view: 'welcome'}, ""); 
         }
 
@@ -201,7 +269,7 @@
             location.reload();
         }
 
-        // --- DASHBOARD LOGIC ---
+        // --- NAVIGATION & CROSSHAIR LOGIC ---
         function initCrosshair() {
             document.getElementById('welcome-screen').style.display = 'none';
             document.getElementById('crosshair-system').style.display = 'block';
