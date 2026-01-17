@@ -9,72 +9,26 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         body, html { height: 100%; overflow: hidden; background: #fff; }
-        
-        .community-wrapper {
-            margin-top: 80px;
-            height: calc(100vh - 140px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-        }
-
-        /* --- STAGE 0: APPROVED AUTH GATE --- */
+        .community-wrapper { margin-top: 80px; height: calc(100vh - 140px); display: flex; justify-content: center; align-items: center; position: relative; }
         .gateway-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; width: 100%; max-width: 900px; }
         .choice-card { border: 2px solid #1a1a1a; padding: 60px 40px; text-align: center; cursor: pointer; transition: 0.3s; }
         .choice-card:hover { background: #1a1a1a; color: white; }
         #auth-form-container { display: none; width: 100%; max-width: 400px; border: 2px solid #1a1a1a; padding: 40px; background: #fff; text-align: center; }
-        
         .auth-input { width: 100%; padding: 12px; border: 1px solid #ccc; margin-bottom: 10px; box-sizing: border-box; }
-        .signup-only { display: none; } /* Hidden by default, toggled by JS */
-
-        /* --- STAGE 1: THE WELCOME --- */
+        .signup-only { display: none; }
         #welcome-screen { display: none; text-align: center; width: 100%; max-width: 900px; position: relative; }
         .card-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 40px; }
-        .action-card {
-            border: 2px solid #1a1a1a;
-            padding: 60px 20px;
-            font-weight: bold;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: 0.2s;
-            background: #fff;
-        }
+        .action-card { border: 2px solid #1a1a1a; padding: 60px 20px; font-weight: bold; font-size: 1.2rem; cursor: pointer; transition: 0.2s; background: #fff; }
         .action-card:hover { background: #1a1a1a; color: #fff; }
-
-        /* --- STAGE 2 & 3: THE CROSSHAIR SYSTEM --- */
-        #crosshair-system {
-            width: 100%;
-            height: 100%;
-            display: none;
-            position: relative;
-            overflow: hidden;
-        }
-
+        #crosshair-system { width: 100%; height: 100%; display: none; position: relative; overflow: hidden; }
         .axis { position: absolute; background: #000; transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
         .v-axis { width: 4px; height: 80%; left: 50%; top: 10%; transform: translateX(-50%); }
         .h-axis { height: 4px; width: 80%; top: 50%; left: 10%; transform: translateY(-50%); }
-
-        .center-dot {
-            position: absolute; width: 12px; height: 12px; background: red; border-radius: 50%;
-            left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 10;
-            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .quadrant {
-            position: absolute; width: 40%; height: 40%; display: flex;
-            align-items: center; justify-content: center; cursor: pointer;
-            font-weight: bold; font-size: 1.5rem; transition: 0.3s;
-        }
+        .center-dot { position: absolute; width: 12px; height: 12px; background: red; border-radius: 50%; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 10; transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .quadrant { position: absolute; width: 40%; height: 40%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; font-size: 1.5rem; transition: 0.3s; }
         .quadrant:hover { color: #888; }
-        .q1 { top: 5%; right: 5%; } 
-        .q2 { top: 5%; left: 5%; }  
-        .q3 { bottom: 5%; left: 5%; } 
-        .q4 { bottom: 5%; right: 5%; }
-
+        .q1 { top: 5%; right: 5%; } .q2 { top: 5%; left: 5%; } .q3 { bottom: 5%; left: 5%; } .q4 { bottom: 5%; right: 5%; }
         #quad-content { position: absolute; display: none; padding: 40px; max-width: 500px; transition: 0.5s; }
-
-        /* Movement States */
         .move-q1 .v-axis { left: 10%; height: 30%; } .move-q1 .h-axis { top: 90%; width: 30%; } .move-q1 .center-dot { left: 10%; top: 90%; }
         .move-q2 .v-axis { left: 90%; height: 30%; } .move-q2 .h-axis { top: 90%; width: 30%; } .move-q2 .center-dot { left: 90%; top: 90%; }
         .move-q3 .v-axis { left: 90%; height: 30%; } .move-q3 .h-axis { top: 10%; width: 30%; } .move-q3 .center-dot { left: 90%; top: 10%; }
@@ -82,25 +36,14 @@
     </style>
 </head>
 <body>
-
     <header id="global-header"></header>
-
     <div class="community-wrapper">
-        
         <div id="choice-view" class="gateway-grid">
-            <div class="choice-card" onclick="showForm('seller')">
-                <h2>Maker / Seller</h2>
-                <p>Join the distributed manufacturing network.</p>
-            </div>
-            <div class="choice-card" onclick="showForm('user')">
-                <h2>User Login</h2>
-                <p>Access your orders and saved designs.</p>
-            </div>
+            <div class="choice-card" onclick="showForm('seller')"><h2>Maker / Seller</h2><p>Join the distributed manufacturing network.</p></div>
+            <div class="choice-card" onclick="showForm('user')"><h2>User Login</h2><p>Access your orders and saved designs.</p></div>
         </div>
-
         <div id="auth-form-container">
             <h2 id="form-title">Authentication</h2>
-            
             <div id="custom-fields" style="margin-top:15px;">
                 <input type="text" id="reg-name" placeholder="Full Name" class="auth-input signup-only">
                 <input type="email" id="reg-email" placeholder="Email Address" class="auth-input">
@@ -112,25 +55,16 @@
                     <option value="Professional">Professional</option>
                 </select>
             </div>
-
             <button class="action-card" id="main-auth-btn" style="width:100%; padding:12px; margin-bottom:15px;" onclick="handleCustomAuth()">CONTINUE</button>
-
             <div style="border-top: 1px solid #eee; padding-top:15px;">
                 <p style="font-size:0.7rem; color:#888; margin-bottom:10px;">OR USE</p>
-                <div id="g_id_onload" 
-                     data-client_id="358722822690-mq80rnmjvdva4s187hpk14i2er6cp7mn.apps.googleusercontent.com" 
-                     data-callback="handleGoogleAuth">
-                </div>
+                <div id="g_id_onload" data-client_id="358722822690-mq80rnmjvdva4s187hpk14i2er6cp7mn.apps.googleusercontent.com" data-callback="handleGoogleAuth"></div>
                 <div class="g_id_signin" data-type="standard" style="display: flex; justify-content: center;"></div>
             </div>
-
             <p onclick="location.reload()" style="cursor:pointer; margin-top:20px; text-decoration:underline; font-size:0.8rem;">Back to choices</p>
         </div>
-        
         <section id="welcome-screen">
-            <div style="position: absolute; top: -40px; right: 0;">
-                <button class="btn-select" style="width: auto; padding: 5px 15px; font-size: 0.7rem; border-color: #ccc; color: #888;" onclick="submitLogout()">SIGN OUT</button>
-            </div>
+            <div style="position: absolute; top: -40px; right: 0;"><button class="btn-select" style="width: auto; padding: 5px 15px; font-size: 0.7rem; border-color: #ccc; color: #888;" onclick="submitLogout()">SIGN OUT</button></div>
             <h1>Welcome to the Logikos.in community, <br><span id="display-name" style="color: #666;">Member</span></h1>
             <p id="display-id" style="font-size: 0.8rem; letter-spacing: 1px; color: #999; margin-top: 5px;"></p>
             <p style="margin-top: 20px;">What are you feeling today?</p>
@@ -140,120 +74,62 @@
                 <button class="action-card" onclick="initCrosshair()">MANAGE</button>
             </div>
         </section>
-
         <section id="crosshair-system">
-            <div class="v-axis axis"></div>
-            <div class="h-axis axis"></div>
-            <div class="center-dot"></div>
-
+            <div class="v-axis axis"></div><div class="h-axis axis"></div><div class="center-dot"></div>
             <div class="quadrant q1" onclick="focusQuad(1, 'INNOVATE', 'Exploring positive-positive growth and new design iterations.')">Q1: INNOVATE</div>
             <div class="quadrant q2" onclick="focusQuad(2, 'ANALYZE', 'Critical negative-positive assessment of current constraints.')">Q2: ANALYZE</div>
             <div class="quadrant q3" onclick="focusQuad(3, 'STABILIZE', 'Addressing core fundamentals in the negative-negative zone.')">Q3: STABILIZE</div>
             <div class="quadrant q4" onclick="focusQuad(4, 'PRODUCE', 'Positive output generation through optimized manufacturing.')">Q4: PRODUCE</div>
-
-            <div id="quad-content">
-                <h2 id="q-title" style="font-size: 2.5rem; margin-bottom: 20px;">TITLE</h2>
-                <p id="q-desc" style="line-height: 1.6; font-size: 1.1rem;">Description goes here.</p>
-                <button class="action-card" style="margin-top: 30px; width: auto; padding: 10px 30px; font-size: 1rem;" onclick="resetCrosshair()">BACK</button>
-            </div>
+            <div id="quad-content"><h2 id="q-title" style="font-size: 2.5rem; margin-bottom: 20px;">TITLE</h2><p id="q-desc" style="line-height: 1.6; font-size: 1.1rem;">Description goes here.</p><button class="action-card" style="margin-top: 30px; width: auto; padding: 10px 30px; font-size: 1rem;" onclick="resetCrosshair()">BACK</button></div>
         </section>
-
     </div>
-
     <footer id="global-footer"></footer>
     <script src="../js/navigation.js"></script>
-
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbyNW7jdJPlBRKSScDxB0mvGz9XrbfUgvHYn9Rm0KBor3HbJSEJyzDu7Z_9MXJCY6jKn/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycby9w4ivhaGU3uGdr9PtwEsSe8xZEXVPZBqV8JPHXBKrvdbMIPS1zvN4E5WwNRpRRcr9/exec";
         let authMode = 'SIGN_UP'; 
-
-        // --- AUTH UI LOGIC ---
         function showForm(mode) {
             authMode = (mode === 'seller') ? 'SIGN_UP' : 'SIGN_IN';
-            
             document.getElementById('choice-view').style.display = 'none';
             document.getElementById('auth-form-container').style.display = 'block';
             document.getElementById('form-title').innerText = (authMode === 'SIGN_UP') ? "Maker Registration" : "User Login";
             document.getElementById('main-auth-btn').innerText = (authMode === 'SIGN_UP') ? "CREATE ACCOUNT" : "SIGN IN";
-            
-            // Toggle visibility of signup-only fields
             const signupFields = document.querySelectorAll('.signup-only');
             signupFields.forEach(el => el.style.display = (authMode === 'SIGN_UP' ? 'block' : 'none'));
         }
-
-        // --- AUTH SUBMISSION LOGIC ---
-
-        // Path 1: Manual ID/Password
         async function handleCustomAuth() {
             const email = document.getElementById('reg-email').value;
             const pass = document.getElementById('reg-pass').value;
-
             if(!email.includes('@')) { alert("Valid email required"); return; }
-            if(pass.length < 4) { alert("Password too short"); return; }
-
             const payload = {
-                action: "SIGN_UP_OR_IN",
-                mode: authMode,
-                isGoogle: false,
-                email: email,
-                password: pass,
-                name: document.getElementById('reg-name').value,
-                city: document.getElementById('reg-city').value,
-                type: document.getElementById('reg-type').value
+                action: "SIGN_UP_OR_IN", mode: authMode, isGoogle: false, email: email, password: pass,
+                name: document.getElementById('reg-name').value, city: document.getElementById('reg-city').value, type: document.getElementById('reg-type').value
             };
-            
             await callBackend(payload);
         }
-
-        // Path 2: Google Authentication
         async function handleGoogleAuth(response) {
             const user = parseJwt(response.credential);
-            let payload = {
-                action: "SIGN_UP_OR_IN",
-                mode: authMode,
-                isGoogle: true,
-                email: user.email,
-                name: user.name
-            };
-
-            // If it's a new signup via Google, ask for missing metadata
+            let payload = { action: "SIGN_UP_OR_IN", mode: authMode, isGoogle: true, email: user.email, name: user.name };
             if (authMode === 'SIGN_UP') {
-                const city = prompt("To complete your Maker profile, please enter your City:");
+                const city = prompt("Please enter your City:");
                 const type = prompt("Account Type (Personal or Professional):");
-                if (!city || !type) { alert("City and Type are required for registration."); return; }
-                payload.city = city;
-                payload.type = type;
+                if (!city || !type) { alert("City and Type are required."); return; }
+                payload.city = city; payload.type = type;
             }
-
             await callBackend(payload);
         }
-
-        // --- BACKEND COMMUNICATION ---
         async function callBackend(payload) {
-            document.getElementById('main-auth-btn').innerText = "PROCESSING...";
-            document.getElementById('main-auth-btn').disabled = true;
-
             try {
                 const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const result = await res.json();
-                
                 if (result.status === "success") {
                     sessionStorage.setItem('userId', result.userId);
                     sessionStorage.setItem('userEmail', result.email);
                     sessionStorage.setItem('userName', result.name || "Member");
                     showWelcome();
-                } else {
-                    alert("Error: " + result.message);
-                    document.getElementById('main-auth-btn').innerText = (authMode === 'SIGN_UP') ? "CREATE ACCOUNT" : "SIGN IN";
-                    document.getElementById('main-auth-btn').disabled = false;
-                }
-            } catch (e) {
-                console.error("Connection error", e);
-                alert("Could not connect to server. Please check your internet.");
-                document.getElementById('main-auth-btn').disabled = false;
-            }
+                } else { alert(result.message); }
+            } catch (e) { alert("Backend Error. Check deployment."); }
         }
-
         function showWelcome() {
             document.getElementById('auth-form-container').style.display = 'none';
             document.getElementById('welcome-screen').style.display = 'block';
@@ -261,73 +137,34 @@
             document.getElementById('display-id').innerText = "ID: " + sessionStorage.getItem('userId');
             history.pushState({view: 'welcome'}, ""); 
         }
-
         async function submitLogout() {
             const payload = { action: "LOGOUT", userId: sessionStorage.getItem('userId') };
             fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-            sessionStorage.clear();
-            location.reload();
+            sessionStorage.clear(); location.reload();
         }
-
-        // --- NAVIGATION & CROSSHAIR LOGIC ---
-        function initCrosshair() {
-            document.getElementById('welcome-screen').style.display = 'none';
-            document.getElementById('crosshair-system').style.display = 'block';
-            history.pushState({view: 'crosshair'}, "");
-        }
-
+        function initCrosshair() { document.getElementById('welcome-screen').style.display = 'none'; document.getElementById('crosshair-system').style.display = 'block'; history.pushState({view: 'crosshair'}, ""); }
         function focusQuad(num, title, desc) {
-            const system = document.getElementById('crosshair-system');
-            const content = document.getElementById('quad-content');
-            system.className = 'move-q' + num;
-            document.querySelectorAll('.quadrant').forEach(q => q.style.display = 'none');
-            content.style.display = 'block';
-            document.getElementById('q-title').innerText = title;
-            document.getElementById('q-desc').innerText = desc;
-
-            content.style.top = (num === 1 || num === 2) ? "10%" : "auto";
-            content.style.bottom = (num === 3 || num === 4) ? "10%" : "auto";
-            content.style.left = (num === 1 || num === 4) ? "20%" : "auto";
-            content.style.right = (num === 2 || num === 3) ? "20%" : "auto";
+            const system = document.getElementById('crosshair-system'); const content = document.getElementById('quad-content');
+            system.className = 'move-q' + num; document.querySelectorAll('.quadrant').forEach(q => q.style.display = 'none');
+            content.style.display = 'block'; document.getElementById('q-title').innerText = title; document.getElementById('q-desc').innerText = desc;
+            content.style.top = (num === 1 || num === 2) ? "10%" : "auto"; content.style.bottom = (num === 3 || num === 4) ? "10%" : "auto";
+            content.style.left = (num === 1 || num === 4) ? "20%" : "auto"; content.style.right = (num === 2 || num === 3) ? "20%" : "auto";
             content.style.textAlign = (num === 1 || num === 4) ? "left" : "right";
         }
-
         function resetCrosshair() {
-            const system = document.getElementById('crosshair-system');
-            const content = document.getElementById('quad-content');
-            const welcome = document.getElementById('welcome-screen');
-
-            if (content.style.display === 'block') {
-                system.className = '';
-                content.style.display = 'none';
-                document.querySelectorAll('.quadrant').forEach(q => q.style.display = 'flex');
-            } else {
-                system.style.display = 'none';
-                welcome.style.display = 'block';
-            }
+            const system = document.getElementById('crosshair-system'); const content = document.getElementById('quad-content'); const welcome = document.getElementById('welcome-screen');
+            if (content.style.display === 'block') { system.className = ''; content.style.display = 'none'; document.querySelectorAll('.quadrant').forEach(q => q.style.display = 'flex'); }
+            else { system.style.display = 'none'; welcome.style.display = 'block'; }
         }
-
         window.onpopstate = function(event) {
-            document.getElementById('welcome-screen').style.display = 'none';
-            document.getElementById('crosshair-system').style.display = 'none';
-            document.getElementById('choice-view').style.display = 'none';
-            document.getElementById('auth-form-container').style.display = 'none';
-
-            if (event.state && event.state.view === 'crosshair') {
-                document.getElementById('crosshair-system').style.display = 'block';
-            } else if (event.state && event.state.view === 'welcome') {
-                document.getElementById('welcome-screen').style.display = 'block';
-            } else {
-                document.getElementById('choice-view').style.display = 'grid';
-            }
+            document.querySelectorAll('#welcome-screen, #crosshair-system, #choice-view, #auth-form-container').forEach(d => d.style.display = 'none');
+            if (event.state && event.state.view === 'crosshair') { document.getElementById('crosshair-system').style.display = 'block'; }
+            else if (event.state && event.state.view === 'welcome') { document.getElementById('welcome-screen').style.display = 'block'; }
+            else { document.getElementById('choice-view').style.display = 'grid'; }
         };
-
         function parseJwt(token) {
-            var base64Url = token.split('.')[1];
-            var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join(''));
+            var base64Url = token.split('.')[1]; var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) { return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2); }).join(''));
             return JSON.parse(jsonPayload);
         };
     </script>
