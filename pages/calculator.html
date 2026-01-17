@@ -172,86 +172,128 @@
         <button class="btn-select" style="width:auto; padding: 10px 30px;" onclick="goBack()">Back to Estimator</button>
     </div>
 
-    <div id="modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8);">
-        <div class="modal-box" style="background:#fff; margin:10% auto; padding:30px; width:400px; position: relative;">
-            <h3>Enter Details</h3>
-            <input type="email" id="u-email" placeholder="Email (Mandatory)*" style="width:100%; padding:10px; margin:10px 0;">
-            <input type="text" id="u-city" placeholder="City" style="width:100%; padding:10px; margin:10px 0;">
-            <input type="tel" id="u-phone" placeholder="Phone" style="width:100%; padding:10px; margin:10px 0;">
-            <button class="main-action-btn" onclick="submitModal()">SUBMIT</button>
-        </div>
+   <div id="modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.85);">
+    <div class="modal-box" style="background:#fff; margin:10% auto; padding:30px; width:400px; position: relative; border: 3px solid #1a1a1a;">
+        <button onclick="closeModal()" style="position: absolute; right: 10px; top: 10px; background: none; border: none; font-size: 1.5rem; cursor: pointer; font-weight: bold;">&times;</button>
+        
+        <h3>Unlock Your Estimate</h3>
+        <p style="font-size: 0.8rem; margin-bottom: 15px; color: #666;">Enter details to view cost and weight.</p>
+        
+        <input type="email" id="u-email" placeholder="Email (Mandatory)*" style="width:100%; padding:12px; margin:10px 0; border: 1px solid #ccc;">
+        <input type="text" id="u-city" placeholder="City" style="width:100%; padding:12px; margin:10px 0; border: 1px solid #ccc;">
+        <input type="tel" id="u-phone" placeholder="Phone" style="width:100%; padding:12px; margin:10px 0; border: 1px solid #ccc;">
+        
+        <button class="main-action-btn" id="modal-submit-btn" onclick="submitModal()">SUBMIT & REVEAL</button>
     </div>
+</div>
 
     <footer id="global-footer"></footer>
     <script src="../js/navigation.js"></script>
 
     <script>
-        let isCalculated = false;
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyNW7jdJPlBRKSScDxB0mvGz9XrbfUgvHYn9Rm0KBor3HbJSEJyzDu7Z_9MXJCY6jKn/exec";
+    let isCalculated = false;
+    let currentFileName = "N/A";
 
-        function selectMat(btn) {
-            document.querySelectorAll('.mat-opt').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+    function selectMat(btn) {
+        document.querySelectorAll('.mat-opt').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        onInputChanged();
+    }
+
+    function selectInf(btn) {
+        document.querySelectorAll('.inf-opt').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        onInputChanged();
+    }
+
+    function handleUpload(input) {
+        if(input.files[0]) {
+            currentFileName = input.files[0].name;
+            document.getElementById('v-status').innerHTML = `
+                <div style="background: #1a1a1a; color: white; padding: 20px; border-radius: 50%; width: 80px; height: 80px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center;">3D</div>
+                <strong>${currentFileName}</strong><br>Ready to Calculate
+            `;
             onInputChanged();
         }
+    }
 
-        function selectInf(btn) {
-            document.querySelectorAll('.inf-opt').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            onInputChanged();
-        }
+    function onInputChanged() {
+        isCalculated = false;
+        document.getElementById('action-btn').innerText = "CALCULATE";
+        document.getElementById('result-display').style.display = "none";
+    }
 
-        function handleUpload(input) {
-            if(input.files[0]) {
-                // Visual feedback that file is accepted
-                document.getElementById('v-status').innerHTML = `
-                    <div style="background: #1a1a1a; color: white; padding: 20px; border-radius: 50%; width: 100px; height: 100px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center;">3D</div>
-                    <strong>${input.files[0].name}</strong><br>Model Ready for Calculation
-                `;
-                onInputChanged();
-            }
-        }
+    function closeModal() {
+        document.getElementById('modal').style.display = 'none';
+    }
 
-        function onInputChanged() {
-            isCalculated = false;
-            document.getElementById('action-btn').innerText = "CALCULATE";
-            document.getElementById('result-display').style.display = "none";
-        }
+    async function performCalculation() {
+        const weight = (Math.random() * 150 + 20).toFixed(1);
+        const cost = (Math.random() * 800 + 150).toFixed(2);
+        
+        document.getElementById('weight').innerText = weight;
+        document.getElementById('cost').innerText = cost;
+        document.getElementById('result-display').style.display = 'block';
+        document.getElementById('action-btn').innerText = "CHECKOUT";
+        isCalculated = true;
 
-        function performCalculation() {
-            // Only runs when CALCULATE is clicked
-            document.getElementById('weight').innerText = (Math.random() * 150 + 20).toFixed(1);
-            document.getElementById('cost').innerText = (Math.random() * 800 + 150).toFixed(2);
-            document.getElementById('result-display').style.display = 'block';
-            document.getElementById('action-btn').innerText = "CHECKOUT";
-            isCalculated = true;
-        }
+        // SEND DATA TO GOOGLE SHEET
+        const payload = {
+            action: "SUBMIT_LEAD",
+            email: sessionStorage.getItem('userEmail'),
+            city: sessionStorage.getItem('userCity'),
+            phone: sessionStorage.getItem('userPhone'),
+            file_name: currentFileName,
+            material: document.querySelector('.mat-opt.active')?.innerText || "PLA",
+            infill: document.querySelector('.inf-opt.active')?.innerText.split('(')[0] || "Standard",
+            weight: weight,
+            cost: cost,
+            admin_id: sessionStorage.getItem('userId') || "Logikos"
+        };
 
-        function handleMainAction() {
-            if (!isCalculated) {
-                const savedEmail = sessionStorage.getItem('userEmail');
-                if (savedEmail) {
-                    performCalculation();
-                } else {
-                    document.getElementById('modal').style.display = 'block';
-                }
+        try {
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+            console.log("Lead sent successfully");
+        } catch (e) { console.error("Lead log failed", e); }
+    }
+
+    function handleMainAction() {
+        if (!isCalculated) {
+            if (sessionStorage.getItem('userEmail')) {
+                performCalculation();
             } else {
-                document.getElementById('calculator-view').style.display = 'none';
-                document.getElementById('success-view').style.display = 'block';
+                document.getElementById('modal').style.display = 'block';
             }
+        } else {
+            document.getElementById('calculator-view').style.display = 'none';
+            document.getElementById('success-view').style.display = 'block';
         }
+    }
 
-        function submitModal() {
-            const email = document.getElementById('u-email').value;
-            if (!email.includes('@')) { alert("A valid email is required."); return; }
-            sessionStorage.setItem('userEmail', email);
-            document.getElementById('modal').style.display = 'none';
-            performCalculation();
-        }
+    function submitModal() {
+        const email = document.getElementById('u-email').value;
+        const city = document.getElementById('u-city').value;
+        const phone = document.getElementById('u-phone').value;
 
-        function goBack() {
-            document.getElementById('success-view').style.display = 'none';
-            document.getElementById('calculator-view').style.display = 'grid';
-        }
-    </script>
+        if (!email.includes('@')) { alert("Valid email is required."); return; }
+        
+        // Disable button to prevent double clicks
+        document.getElementById('modal-submit-btn').innerText = "UPDATING...";
+        document.getElementById('modal-submit-btn').disabled = true;
+
+        sessionStorage.setItem('userEmail', email);
+        sessionStorage.setItem('userCity', city);
+        sessionStorage.setItem('userPhone', phone);
+        
+        document.getElementById('modal').style.display = 'none';
+        performCalculation();
+    }
+
+    function goBack() {
+        document.getElementById('success-view').style.display = 'none';
+        document.getElementById('calculator-view').style.display = 'grid';
+    }
+</script>
 </body>
 </html>
