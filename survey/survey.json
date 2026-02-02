@@ -1,4 +1,146 @@
 {
+  "project_title": "Logikos Strategic Survey",
+  "welcome_page": {
+    "title": "Welcome to Logikos.in",
+    "description": "Logikos.in is a platform designed to simplify how creators build and how service providers grow. We are perfecting an automated cost engine. Estimated time: 5mins.",
+    "question": {
+      "id": "E-mail",
+      "type": "Des_Q",
+      "text": "To get started, please enter your email. This will serve as your unique identity on Logikos.in.",
+      "required": true
+    }
+  },
+  "survey_pages": [
+    {
+      "page_id": "p_prelim",
+      "title": "Preliminary Information",
+      "questions": [
+        {
+          "id": "Q1",
+          "type": "MCQ_1",
+          "text": "How did you hear about our platform?",
+          "option_qty": 4,
+          "options": ["Referral", "Social Media", "Ads", "Others"],
+          "is_dropdown": false,
+          "has_other": true,
+          "required": true
+        },
+        {
+          "id": "Q2",
+          "type": "Gate",
+          "text": "Which category best describes you",
+          "option_qty": 4,
+          "options": [
+            { "label": "Hobbyist/DIYers", "jump_to_page": "BRANCH_A" },
+            { "label": "Design/Manufacturing/Architecture &ID/Engineering professional", "jump_to_page": "BRANCH_B" },
+            { "label": "Startup/Business Owner", "jump_to_page": "BRANCH_C" },
+            { "label": "Student/Researcher", "jump_to_page": "BRANCH_D" }
+          ],
+          "required": true
+        },
+        {
+          "id": "Q3",
+          "type": "MCQ_1",
+          "text": "Where are you located",
+          "option_qty": 4,
+          "options": ["Ahmedabad/Surat/Vadodara/Rajkot", "Other places in Gujarat", "Outside Gujarat", "Outside India"],
+          "is_dropdown": false,
+          "has_other": false,
+          "required": true
+        },
+        {
+          "id": "Q4",
+          "type": "MCQ_1",
+          "text": "Have you used 3D printing/prototyping or machining services before?",
+          "option_qty": 2,
+          "options": ["Yes", "No"],
+          "is_dropdown": false,
+          "has_other": false,
+          "required": true
+        },
+        {
+          "id": "Q5",
+          "type": "MCQ_Multi",
+          "text": "What purposes do you need 3D printed parts for?",
+          "option_qty": 7,
+          "options": ["Academic projects", "Professional projects", "Personalized gifting", "Decor", "Toys/Entertainment", "Repair work", "Others"],
+          "variant": "standard",
+          "has_other": true,
+          "required": true
+        },
+        {
+          "id": "Q6",
+          "type": "MCQ_Multi",
+          "text": "What type of Activities do you engage in?",
+          "option_qty": 17,
+          "options": ["Product Design", "STEM Education", "Product development", "Customized gifting", "Outsourcing 3D printing", "Inhouse 3D printing", "Bulk Gifting", "Electronic part mounting", "RC Hobby", "Drones", "Automation", "Testing", "Prototyping", "Enclosure design", "Tools/Fixtures", "Lighting/Lamps", "3D Model generation/modification/download"],
+          "variant": "bubble",
+          "has_other": false,
+          "required": true
+        }
+      ]
+    },
+    {
+      "page_id": "BRANCH_A",
+      "title": "Hobbyist / DIYers Details",
+      "questions": [
+        { "id": "QA1", "type": "MCQ_Multi", "text": "What type of projects do you work on", "option_qty": 9, "options": ["Prototypes", "Art", "Gadgets", "Lighting", "Mountings", "Mechanisms", "Drones", "RC vehicles", "Others"], "variant": "standard", "has_other": true, "required": true },
+        { "id": "QA2", "type": "MCQ_Multi", "text": "How do you develop concepts?", "option_qty": 4, "options": ["CAD software", "3D Models", "AI tools", "Drawings"], "variant": "standard", "has_other": false, "required": true },
+        { "id": "QA3", "type": "MCQ_1", "text": "How often do you source parts online?", "option_qty": 4, "options": ["Never", "Rarely", "Monthly", "Frequently"], "is_dropdown": false, "has_other": false, "required": true },
+        { "id": "QA4", "type": "MCQ_Multi", "text": "How do you estimate cost?", "option_qty": 4, "options": ["Price lists", "Manual calculation", "Online calculators", "Consult expert"], "variant": "standard", "has_other": false, "required": true },
+        { "id": "QA5", "type": "MCQ_1", "text": "Do you compare multiple suppliers before ordering?", "option_qty": 2, "options": ["Yes", "No"], "is_dropdown": false, "has_other": false, "required": true },
+        { "id": "QA6", "type": "MCQ_1", "text": "Interested in personalised tutorials?", "option_qty": 2, "options": ["Yes", "No"], "is_dropdown": false, "has_other": false, "required": true }
+      ]
+    },
+    {
+      "page_id": "BRANCH_B",
+      "title": "Professional Details",
+      "questions": [
+         { "id": "QB1", "type": "MCQ_1", "text": "What type of work are you involved in?", "option_qty": 4, "options": ["Product/Part design", "Architecture & Interior Design", "Manufacturing", "Art project"], "is_dropdown": false, "has_other": false, "required": true },
+         { "id": "QB2", "type": "MCQ_1", "text": "Business cycle stage?", "option_qty": 4, "options": ["Concept", "Prototype", "Testing", "Production"], "is_dropdown": false, "has_other": false, "required": true },
+         { "id": "QB3", "type": "MCQ_1", "text": "Tight tolerances required?", "option_qty": 2, "options": ["Yes", "No"], "is_dropdown": false, "has_other": false, "required": true },
+         { "id": "QB4", "type": "MCQ_Multi", "text": "How do you develop design guidelines?", "option_qty": 4, "options": ["CAD software", "3D Models", "AI tools", "Drawings"], "variant": "standard", "has_other": false, "required": true },
+         { "id": "QB5", "type": "MCQ_1", "text": "Source parts online frequency?", "option_qty": 4, "options": ["Never", "Rarely", "Monthly", "Frequently"], "is_dropdown": false, "has_other": false, "required": true },
+         { "id": "QB6", "type": "MCQ_Multi", "text": "Cost estimation method?", "option_qty": 4, "options": ["Price lists", "Manual calculation", "Online calculators", "Consult expert"], "variant": "standard", "has_other": false, "required": true },
+         { "id": "QB7", "type": "MCQ_1", "text": "Compare suppliers?", "option_qty": 2, "options": ["Yes", "No"], "is_dropdown": false, "has_other": false, "required": true },
+         { "id": "QB8", "type": "MCQ_1", "text": "Interested in tutorials?", "option_qty": 2, "options": ["Yes", "No"], "is_dropdown": false, "has_other": false, "required": true }
+      ]
+    },
+    {
+      "page_id": "BRANCH_C",
+      "title": "Startup / Business Owner",
+      "questions": [
+         { "id": "QC1", "type": "MCQ_1", "text": "Developing new product?", "option_qty": 2, "options": ["Yes", "No"], "is_dropdown": false, "has_other": false, "required": true },
+         { "id": "QC2", "type": "MCQ_Multi", "text": "Concept development?", "option_qty": 4, "options": ["CAD software", "3D Models", "AI tools", "Drawings"], "variant": "standard", "has_other": false, "required": true },
+         { "id": "QC3", "type": "MCQ_1", "text": "Online sourcing frequency?", "option_qty": 4, "options": ["Never", "Rarely", "Monthly", "Frequently"], "is_dropdown": false, "has_other": false, "required": true },
+         { "id": "QC4", "type": "MCQ_Multi", "text": "Cost estimation?", "option_qty": 4, "options": ["Price lists", "Manual calculation", "Online calculators", "Consult expert"], "variant": "standard", "has_other": false, "required": true },
+         { "id": "QC5", "type": "MCQ_1", "text": "Compare suppliers?", "option_qty": 2, "options": ["Yes", "No"], "is_dropdown": false, "has_other": false, "required": true },
+         { "id": "QC6", "type": "MCQ_1", "text": "Primary decision factor?", "option_qty": 4, "options": ["Price", "Speed", "Quality", "Reliability"], "is_dropdown": false, "has_other": false, "required": true }
+      ]
+    },
+    {
+      "page_id": "BRANCH_D",
+      "title": "Student / Researcher",
+      "questions": [
+         { "id": "QD1", "type": "MCQ_1", "text": "Area of Study?", "option_qty": 5, "options": ["Engineering", "Design", "Arts", "Architecture", "Interior Design"], "is_dropdown": false, "has_other": false, "required": true },
+         { "id": "QD2", "type": "MCQ_1", "text": "Use 3D modelling tools?", "option_qty": 2, "options": ["Yes", "No"], "is_dropdown": false, "has_other": false, "required": true },
+         { "id": "QD3", "type": "MCQ_1", "text": "Online sourcing frequency?", "option_qty": 4, "options": ["Never", "Rarely", "Monthly", "Frequently"], "is_dropdown": false, "has_other": false, "required": true },
+         { "id": "QD4", "type": "MCQ_Multi", "text": "Cost estimation?", "option_qty": 4, "options": ["Price lists", "Manual calculation", "Online calculators", "Consult expert"], "variant": "standard", "has_other": false, "required": true },
+         { "id": "QD5", "type": "MCQ_1", "text": "Compare suppliers?", "option_qty": 2, "options": ["Yes", "No"], "is_dropdown": false, "has_other": false, "required": true },
+         { "id": "QD6", "type": "MCQ_1", "text": "Primary decision factor?", "option_qty": 4, "options": ["Price", "Speed", "Quality", "Reliability"], "is_dropdown": false, "has_other": false, "required": true },
+         { "id": "QD7", "type": "MCQ_1", "text": "Bulk discounts motivate?", "option_qty": 2, "options": ["Yes", "No"], "is_dropdown": false, "has_other": false, "required": true },
+         { "id": "QD8", "type": "MCQ_1", "text": "Receive customer leads?", "option_qty": 2, "options": ["Yes", "No"], "is_dropdown": false, "has_other": false, "required": true },
+         { "id": "QD9", "type": "MCQ_1", "text": "Interested in tutorials?", "option_qty": 2, "options": ["Yes", "No"], "is_dropdown": false, "has_other": false, "required": true }
+      ]
+    }
+  ],
+  "thank_you_page": {
+    "title": "End of Survey",
+    "note": "Thank you for your time. Your insights are valuable for perfecting the Logikos engine.",
+    "redirect_url": "https://logikos.in",
+    "buttons": []
+  }
+}{
     "pages": [
         {
             "id": "p1",
