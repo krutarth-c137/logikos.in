@@ -3,133 +3,250 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logikos.in | Strategic Survey</title>
+    <title>Logikos | Strategic Survey</title>
+    <link rel="stylesheet" href="../style.css"> 
     <style>
-        :root {
-            --primary: #000000;
-            --accent: #2563eb;
-            --error: #dc2626;
-            --bg: #ffffff;
-            --secondary-bg: #f8fafc;
-            --border-black: #000000;
+        /* --- LOGIKOS SURVEY THEME OVERRIDES --- */
+        html, body {
+            height: 100%;
+            margin: 0;
+            background: #ffffff; /* Overriding f9f9f9 for clean look */
         }
 
-        /* GLOBAL STYLES */
-        body {
-            font-family: 'Inter', -apple-system, sans-serif;
-            margin: 0;
+        .survey-hero-wrapper {
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
-            background-color: var(--bg);
-            color: #1e293b;
-        }
-
-        /* HEADER & FOOTER */
-        .logikos-header {
-            height: 70px;
-            background: var(--bg);
-            border-bottom: 2px solid var(--primary);
-            display: flex;
-            align-items: center;
-            position: fixed;
-            top: 0;
-            width: 100%;
-            z-index: 1000;
-        }
-        .header-container { width: 90%; max-width: 1200px; margin: 0 auto; }
-        .logo { font-size: 1.8rem; font-weight: 900; letter-spacing: -1px; }
-        .logo span { color: var(--accent); }
-
-        .logikos-footer {
-            padding: 30px 20px;
-            background: var(--secondary-bg);
-            border-top: 1px solid #e2e8f0;
-            text-align: center;
-            font-size: 0.85rem;
-            margin-top: auto;
-        }
-
-        /* SURVEY LAYOUT */
-        #survey-content {
-            flex: 1;
-            margin-top: 100px; 
-            padding: 20px;
-            display: flex;
             justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 140px); /* Matches your home page calc */
+            text-align: center;
+            padding: 20px;
         }
-        #surveyContainer { width: 100%; max-width: 800px; }
 
-        /* TYPOGRAPHY */
-        h1 { font-size: 2.2rem; text-transform: uppercase; margin-bottom: 10px; text-align: center; }
-        h2 { font-size: 1.4rem; color: var(--primary); margin-bottom: 30px; text-align: center; }
-        .welcome-desc { text-align: center; max-width: 700px; margin: 0 auto 40px auto; line-height: 1.6; color: #475569; }
+        /* Welcome Note Center Aligned */
+        h1 { font-size: 2.5rem; letter-spacing: 2px; margin-bottom: 10px; }
+        .welcome-desc { max-width: 600px; color: #555; margin-bottom: 30px; font-size: 1.1rem; }
 
-        /* BUNDLED QUESTION STYLES */
-        .question-block { margin-bottom: 40px; } /* Space between question bundles */
-        .q-text { font-weight: 700; display: block; margin-bottom: 8px; font-size: 1.05rem; }
+        /* The "Logikos Style" Input Box (Half Width + Black Border) */
+        .survey-input {
+            width: 50%;
+            max-width: 400px;
+            padding: 15px;
+            border: 2px solid #000000; /* Distinct Black Border */
+            border-radius: 4px;
+            font-size: 1.1rem;
+            margin-top: 10px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        /* Question Bundle Styling (Tight options, spaced questions) */
+        .question-block { margin-bottom: 40px; text-align: left; width: 100%; max-width: 600px; }
+        .q-text { font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 8px; }
         
         .option-row { 
             display: flex; 
             align-items: center; 
-            padding: 6px 0; /* Tight spacing between options within a bundle */
+            margin-bottom: 8px; /* Tight bundle */
             cursor: pointer; 
         }
-        .option-row input { margin-right: 12px; width: 18px; height: 18px; accent-color: var(--primary); }
+        .option-row input { margin-right: 12px; width: 18px; height: 18px; accent-color: #000; }
 
-        /* INPUTS & BUTTONS */
-        input[type="email"], input[type="text"] {
-            width: 50%; 
-            padding: 12px;
-            border: 2px solid var(--border-black);
-            border-radius: 4px;
-            font-size: 1rem;
-            display: block;
-            margin: 10px auto; /* Centered for Welcome Page */
+        /* Navigation Buttons (Following your btn-box theme) */
+        .nav-btns { margin-top: 40px; display: flex; gap: 20px; }
+        .btn-logikos {
+            padding: 12px 35px;
+            border: 2px solid #1a1a1a;
+            background: #ffffff;
+            color: #1a1a1a;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.1s ease;
         }
-        .nav-btns { 
-            margin-top: 40px; 
-            display: flex; 
-            justify-content: space-between; 
-            padding-top: 20px; 
-            border-top: 1px solid #eee; 
-        }
-        .btn-next { background: var(--primary); color: white; padding: 14px 40px; border: none; font-weight: 700; cursor: pointer; border-radius: 4px; }
-        .btn-back { background: transparent; border: 1px solid #cbd5e1; padding: 14px 40px; color: #64748b; font-weight: 600; cursor: pointer; border-radius: 4px; }
+        .btn-logikos:hover { background: #f8f8f8; }
+        .btn-logikos:active { transform: translateY(2px); background: #eee; }
 
-        /* BUBBLE POOL (List1) */
-        .selection-area { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; min-height: 50px; padding: 10px; border: 2px dashed #cbd5e1; border-radius: 6px; }
-        .selected-bubble { background: #eff6ff; border: 1px solid var(--accent); padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; color: var(--accent); display: flex; align-items: center; }
-        .remove-btn { margin-left: 8px; cursor: pointer; color: var(--error); font-weight: bold; }
+        /* Bubble Pool (List1) */
+        .selection-area { border: 2px dashed #ccc; padding: 10px; margin-bottom: 10px; min-height: 40px; border-radius: 4px; display: flex; flex-wrap: wrap; gap: 5px; }
+        .selected-bubble { background: #000; color: #fff; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; }
         .options-pool { display: flex; flex-wrap: wrap; gap: 8px; }
-        .bubble-option { background: #fff; border: 1px solid #e2e8f0; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; }
-        .bubble-option:hover { border-color: var(--primary); }
+        .bubble-option { border: 1px solid #000; padding: 5px 12px; border-radius: 20px; cursor: pointer; font-size: 0.8rem; }
 
-        /* CENTER ALIGNMENT FOR WELCOME */
-        .page-p1 .q-text { text-align: center; }
-        .page-p1 .nav-btns { justify-content: center; }
+        /* Footer Sync */
+        footer { background: #000; color: white; padding: 20px; text-align: center; font-size: 12px; }
     </style>
 </head>
 <body>
 
-<header class="logikos-header">
-    <div class="header-container"><div class="logo">LOGIKOS<span>.in</span></div></div>
-</header>
+    <nav>
+        <div class="logo">LOGIKOS</div>
+        <span></span> 
+    </nav>
 
-<main id="survey-content">
-    <div id="surveyContainer"></div>
-</main>
+    <main class="survey-hero-wrapper" id="surveyContainer">
+        </main>
 
-<footer class="logikos-footer">
-    <p>&copy; 2026 Logikos.in | Strategic Manufacturing Solutions | Ahmedabad</p>
-</footer>
+    <footer>
+        &copy; 2026 LOGIKOS.IN | SIMPLE IS SENSIBLE | AHMEDABAD
+    </footer>
 
-<script src="engine.js"></script>
-<script>
-    fetch('./survey.json').then(res => res.json()).then(data => {
-        new SurveyEngine(data).init();
-    });
-</script>
+    <script src="engine.js"></script>
+    <script>
+        // GOOGLE SHEETS CONFIG
+        const GOOGLE_SCRIPT_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
 
+        class SurveyEngine {
+            constructor(data) {
+                this.data = data;
+                this.currentPageId = "p1";
+                this.responses = {};
+                this.history = [];
+                this.selectedBranch = null;
+            }
+
+            init() { this.renderPage(); }
+
+            renderPage() {
+                const container = document.getElementById('surveyContainer');
+                container.innerHTML = '';
+                const page = this.data.pages.find(p => p.id === this.currentPageId);
+
+                const h1 = document.createElement('h1');
+                h1.innerText = page.pageName;
+                container.appendChild(h1);
+
+                page.questions.forEach(q => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'question-block';
+                    if(this.currentPageId === 'p1') wrapper.style.textAlign = 'center';
+
+                    if (q.type === 'InfoBox') {
+                        const p = document.createElement('p');
+                        p.className = 'welcome-desc';
+                        p.innerText = q.content;
+                        wrapper.appendChild(p);
+                    } else {
+                        const label = document.createElement('label');
+                        label.className = 'q-text';
+                        label.innerText = q.label;
+                        wrapper.appendChild(label);
+                        
+                        if (q.type === 'DESQ') this.buildDESQ(q, wrapper);
+                        else if (q.type === 'MCQ_1' || q.type === 'MCQ_Logic') this.buildMCQ(q, wrapper, false);
+                        else if (q.type === 'MCQ_Multi') this.buildMCQ(q, wrapper, true);
+                        else if (q.type === 'List1') this.buildList1(q, wrapper);
+                    }
+                    container.appendChild(wrapper);
+                });
+
+                this.renderNav(page, container);
+            }
+
+            buildDESQ(q, w) {
+                const i = document.createElement('input');
+                i.type = q.inputType || 'text';
+                i.className = 'survey-input';
+                i.value = this.responses[q.id] || '';
+                i.oninput = (e) => this.responses[q.id] = e.target.value;
+                w.appendChild(i);
+            }
+
+            buildMCQ(q, w, isMulti) {
+                q.options.forEach(opt => {
+                    const r = document.createElement('label');
+                    r.className = 'option-row';
+                    const checked = isMulti ? (this.responses[q.id] || []).includes(opt) : this.responses[q.id] === opt;
+                    r.innerHTML = `<input type="${isMulti?'checkbox':'radio'}" name="${q.id}" ${checked?'checked':''}> ${opt}`;
+                    r.querySelector('input').onchange = (e) => {
+                        if (!isMulti) {
+                            this.responses[q.id] = opt;
+                            if(q.type === 'MCQ_Logic') this.selectedBranch = q.logic_map[opt];
+                        } else {
+                            if(!this.responses[q.id]) this.responses[q.id] = [];
+                            e.target.checked ? this.responses[q.id].push(opt) : this.responses[q.id] = this.responses[q.id].filter(i => i !== opt);
+                        }
+                    };
+                    w.appendChild(r);
+                });
+            }
+
+            buildList1(q, w) {
+                const area = document.createElement('div'); area.className = 'selection-area';
+                const pool = document.createElement('div'); pool.className = 'options-pool';
+                const refresh = () => {
+                    area.innerHTML = '';
+                    (this.responses[q.id] || []).forEach(val => {
+                        const b = document.createElement('div'); b.className = 'selected-bubble';
+                        b.innerHTML = `${val}`;
+                        area.appendChild(b);
+                    });
+                };
+                q.options.forEach(opt => {
+                    const b = document.createElement('div'); b.className = 'bubble-option'; b.innerText = opt;
+                    b.onclick = () => {
+                        if(!this.responses[q.id]) this.responses[q.id] = [];
+                        if(!this.responses[q.id].includes(opt)) { this.responses[q.id].push(opt); refresh(); }
+                    };
+                    pool.appendChild(b);
+                });
+                w.appendChild(area); w.appendChild(pool); refresh();
+            }
+
+            renderNav(page, container) {
+                const nav = document.createElement('div');
+                nav.className = 'nav-btns';
+                
+                if (this.history.length > 0) {
+                    const b = document.createElement('button'); b.className = 'btn-logikos'; b.innerText = "BACK";
+                    b.onclick = () => { this.currentPageId = this.history.pop(); this.renderPage(); };
+                    nav.appendChild(b);
+                }
+
+                const n = document.createElement('button'); 
+                n.className = 'btn-logikos'; 
+                n.innerText = page.id.startsWith('BRANCH') ? "SUBMIT" : "NEXT";
+                n.onclick = () => {
+                    if (page.id === 'p1' && (!this.responses['email'] || !this.responses['email'].includes('@'))) {
+                        alert("Please enter a valid email."); return;
+                    }
+                    if (page.id.startsWith('BRANCH')) {
+                        this.submitToGoogle();
+                    } else {
+                        this.history.push(this.currentPageId);
+                        this.currentPageId = (this.currentPageId === 'p3' && this.selectedBranch) ? this.selectedBranch : page.nextPage;
+                        this.renderPage();
+                    }
+                };
+                nav.appendChild(n);
+                container.appendChild(nav);
+            }
+
+            async submitToGoogle() {
+                const payload = {};
+                for (const key in this.responses) {
+                    payload[key] = Array.isArray(this.responses[key]) ? this.responses[key].join(', ') : this.responses[key];
+                }
+                
+                document.getElementById('surveyContainer').innerHTML = "<h1>SYNCING...</h1>";
+                
+                try {
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        body: JSON.stringify(payload)
+                    });
+                    document.getElementById('surveyContainer').innerHTML = "<h1>THANK YOU</h1><p>Data synced to Google Sheets.</p>";
+                } catch (e) {
+                    alert("Submission failed. Check console.");
+                }
+            }
+        }
+
+        // Fetch local survey.json and init
+        fetch('./survey.json').then(res => res.json()).then(data => {
+            new SurveyEngine(data).init();
+        });
+    </script>
 </body>
 </html>
