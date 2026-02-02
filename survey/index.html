@@ -6,96 +6,197 @@
     <title>Logikos | Interactive Survey</title>
     <link rel="stylesheet" href="../css/main.css">
     <style>
-        /* BRANDED SURVEY LAYOUT */
-        main { 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            min-height: calc(100vh - 140px); 
-            background: #ffffff; 
-            margin-top: 70px; /* Offset for fixed header */
-        }
+        /* LOGIKOS BRANDING SYNC */
+        main { display: flex; flex-direction: column; align-items: center; min-height: calc(100vh - 140px); margin-top: 70px; background: #fff; }
         #surveyContainer { width: 100%; max-width: 800px; text-align: center; }
-        
-        /* BUNDLING & VALIDATION STYLES */
         .question-block { margin-bottom: 45px; text-align: left; padding: 10px; border-left: 4px solid transparent; }
         .q-text { font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 8px; text-transform: uppercase; }
-        .error-msg { color: #dc3545; font-size: 0.8rem; font-weight: normal; margin-left: 10px; display: none; }
-        
-        /* LOGIKOS INPUT (Black Border) */
+        .error-msg { color: #dc3545; font-size: 0.8rem; display: none; margin-left: 10px; }
         .logikos-input { width: 60%; padding: 12px; border: 2px solid #1a1a1a; margin: 10px auto; display: block; outline: none; }
-        
-        /* OPTION BUNDLES */
-        .option-bundle { display: flex; flex-direction: column; gap: 4px; }
         .option-row { display: flex; align-items: center; padding: 5px 0; cursor: pointer; }
         .option-row input { margin-right: 12px; width: 18px; height: 18px; accent-color: #1a1a1a; }
-
-        /* FIDGET BUTTONS */
         .btn-box { padding: 12px 35px; border: 2px solid #1a1a1a; background: #fff; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: 0.1s; }
         .btn-box:active { transform: translateY(3px); background: #eeeeee; }
         .nav-btns { display: flex; gap: 20px; justify-content: center; width: 100%; padding: 40px 0; }
-
-        /* SELECTION BUBBLES */
         .selection-area { border: 1px solid #1a1a1a; padding: 10px; margin-bottom: 10px; min-height: 45px; display: flex; flex-wrap: wrap; gap: 8px; }
         .selected-bubble { background: #1a1a1a; color: #fff; padding: 5px 12px; border-radius: 2px; font-size: 0.85rem; }
-        .options-pool { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-        .bubble-option { border: 1px solid #1a1a1a; padding: 6px 14px; cursor: pointer; font-size: 0.85rem; }
+        .bubble-option { border: 1px solid #1a1a1a; padding: 6px 14px; cursor: pointer; font-size: 0.85rem; margin-top: 10px; }
     </style>
 </head>
 <body>
     <header id="global-header"><div class="logo-container">LOGIKOS</div></header>
-
     <main><div id="surveyContainer"></div></main>
+    <footer id="global-footer"><div class="footer-content"><span>© 2026 Logikos.in</span><span>Contact: alogikos@gmail.com</span></div></footer>
 
-    <footer id="global-footer">
-        <div class="footer-content"><span>© 2026 Logikos.in</span><span>Contact: alogikos@gmail.com</span></div>
-    </footer>
-
-    <script src="engine.js"></script>
     <script>
-        // FULL REVISED DATASET
+        // 1. DATA
         const surveyData = {
             "pages": [
-                {
-                    "id": "p1", "pageName": "Welcome to Logikos.in", "nextPage": "p2",
-                    "questions": [
-                        { "id": "intro", "type": "InfoBox", "content": "Logikos.in is a platform designed to simplify how creators build and how service providers grow." },
-                        { "id": "E-mail", "type": "DESQ", "label": "Please enter your email to get started.", "required": true }
-                    ]
-                },
-                {
-                    "id": "p2", "pageName": "BASIC INFORMATION", "nextPage": "p3",
-                    "questions": [
-                        { "id": "Q1", "type": "MCQ_1", "label": "How did you hear about our platform?", "options": ["Referral", "Social Media", "Ads", "Others"], "required": true },
-                        { "id": "Q2", "type": "MCQ_Logic", "label": "Which category best describes you", "options": ["Professional", "Student", "Hobbyist", "Startup"], 
-                          "logic_map": { "Hobbyist": "BRANCH_A", "Professional": "BRANCH_B", "Startup": "BRANCH_C", "Student": "BRANCH_D" }, "required": true }
-                    ]
-                },
-                {
-                    "id": "p3", "pageName": "Identity & Relevance", "nextPage": "THANK_YOU",
-                    "questions": [
-                        { "id": "Q4", "type": "MCQ_1", "label": "Have you used 3D printing before?", "options": ["Yes", "No"], "required": true },
-                        { "id": "Q6", "type": "List1", "label": "What activities do you engage in?", "options": ["Product Design", "Drones", "Prototyping", "Testing"], "required": true }
-                    ]
-                },
-                {
-                    "id": "BRANCH_A", "pageName": "Hobbyist Details", "nextPage": "THANK_YOU",
-                    "questions": [{ "id": "QA1", "type": "MCQ_Multi", "label": "Project Types", "options": ["Art", "Gadgets", "RC"], "required": true }]
-                },
-                {
-                    "id": "THANK_YOU", "pageName": "Complete", "isEnd": true,
-                    "questions": [{ "id": "fin", "type": "InfoBox", "content": "Thank you for your response." }]
-                }
+                { "id": "p1", "pageName": "Welcome to Logikos.in", "nextPage": "p2", "questions": [
+                    { "id": "intro", "type": "InfoBox", "content": "Welcome to the Logikos interactive survey. Estimated time : 5mins." },
+                    { "id": "E-mail", "type": "DESQ", "label": "Please enter your email to get started.", "required": true }
+                ]},
+                { "id": "p2", "pageName": "BASIC INFORMATION", "nextPage": "p3", "questions": [
+                    { "id": "Q1", "type": "MCQ_1", "label": "How did you hear about us?", "options": ["Referral", "Social Media", "Ads", "Others"], "required": true },
+                    { "id": "Q2", "type": "MCQ_Logic", "label": "Category", "options": ["Professional", "Student", "Hobbyist", "Startup"], 
+                      "logic_map": { "Hobbyist": "BRANCH_A", "Professional": "BRANCH_B", "Startup": "BRANCH_C", "Student": "BRANCH_D" }, "required": true }
+                ]},
+                { "id": "p3", "pageName": "Identity & Relevance", "nextPage": "THANK_YOU", "questions": [
+                    { "id": "Q4", "type": "MCQ_1", "label": "Have you used 3D printing before?", "options": ["Yes", "No"], "required": true },
+                    { "id": "Q6", "type": "List1", "label": "Activities", "options": ["Product Design", "Drones", "Prototyping", "Testing"], "required": true }
+                ]},
+                { "id": "BRANCH_A", "pageName": "Hobbyist Details", "nextPage": "THANK_YOU", "questions": [
+                    { "id": "QA1", "type": "MCQ_Multi", "label": "Projects", "options": ["Art", "Gadgets", "RC"], "required": true }
+                ]},
+                { "id": "THANK_YOU", "pageName": "Complete", "isEnd": true, "questions": [
+                    { "id": "fin", "type": "InfoBox", "content": "Thank you for your insights." }
+                ]}
             ]
         };
 
-        // Execution Gate
-        document.addEventListener("DOMContentLoaded", () => {
-            if (typeof SurveyEngine !== 'undefined') {
-                const app = new SurveyEngine(surveyData);
-                app.init();
+        // 2. ENGINE
+        class SurveyApp {
+            constructor(data) {
+                this.data = data;
+                this.curr = "p1";
+                this.res = {};
+                this.hist = [];
+                this.branch = null;
+                this.URL = "https://script.google.com/macros/s/AKfycbyoZvAvwTUydT6OCABqfdK5YSKBQDgEgVP7-vKgqGaFAjn0yMgfAn1GjZ5jeLYb_SUf7w/exec";
             }
-        });
+
+            init() { this.render(); }
+
+            render() {
+                const cont = document.getElementById('surveyContainer');
+                cont.innerHTML = '';
+                const page = this.data.pages.find(p => p.id === this.curr);
+                
+                const h = document.createElement(this.curr === 'p1' ? 'h1' : 'h2');
+                h.innerText = page.pageName;
+                cont.appendChild(h);
+
+                page.questions.forEach(q => {
+                    const w = document.createElement('div');
+                    w.className = 'question-block';
+                    w.id = `q-${q.id}`;
+                    if (q.type === 'InfoBox') {
+                        w.innerHTML = `<p class="welcome-desc">${q.content}</p>`;
+                    } else {
+                        w.innerHTML = `<label class="q-text">${q.label} <span class="error-msg">*mandatory</span></label>`;
+                        if (q.type === 'DESQ') this.buildDESQ(q, w);
+                        else if (q.type.startsWith('MCQ')) this.buildMCQ(q, w, q.type === 'MCQ_Multi');
+                        else if (q.type === 'List1') this.buildList(q, w);
+                    }
+                    cont.appendChild(w);
+                });
+                this.buildNav(page, cont);
+            }
+
+            validate(page) {
+                let ok = true;
+                page.questions.forEach(q => {
+                    if (q.required) {
+                        const val = this.res[q.id];
+                        const block = document.getElementById(`q-${q.id}`);
+                        const valid = Array.isArray(val) ? val.length > 0 : (val && val !== "");
+                        if (!valid) {
+                            ok = false;
+                            block.querySelector('.error-msg').style.display = 'inline';
+                            block.style.borderLeft = "4px solid red";
+                        } else {
+                            block.querySelector('.error-msg').style.display = 'none';
+                            block.style.borderLeft = "4px solid transparent";
+                        }
+                    }
+                });
+                return ok;
+            }
+
+            buildDESQ(q, w) {
+                const i = document.createElement('input');
+                i.className = 'logikos-input';
+                i.value = this.res[q.id] || '';
+                i.oninput = (e) => this.res[q.id] = e.target.value;
+                w.appendChild(i);
+            }
+
+            buildMCQ(q, w, multi) {
+                q.options.forEach(opt => {
+                    const l = document.createElement('label');
+                    l.className = 'option-row';
+                    const checked = multi ? (this.res[q.id] || []).includes(opt) : this.res[q.id] === opt;
+                    l.innerHTML = `<input type="${multi?'checkbox':'radio'}" name="${q.id}" ${checked?'checked':''}> ${opt}`;
+                    l.querySelector('input').onchange = (e) => {
+                        if (!multi) {
+                            this.res[q.id] = opt;
+                            if (q.type === 'MCQ_Logic') this.branch = q.logic_map[opt];
+                        } else {
+                            if (!this.res[q.id]) this.res[q.id] = [];
+                            e.target.checked ? this.res[q.id].push(opt) : this.res[q.id] = this.res[q.id].filter(x => x !== opt);
+                        }
+                    };
+                    w.appendChild(l);
+                });
+            }
+
+            buildList(q, w) {
+                const area = document.createElement('div'); area.className = 'selection-area';
+                const pool = document.createElement('div'); pool.className = 'options-pool';
+                const redraw = () => {
+                    area.innerHTML = '';
+                    (this.res[q.id] || []).forEach(v => {
+                        const b = document.createElement('div'); b.className = 'selected-bubble'; b.innerText = v;
+                        area.appendChild(b);
+                    });
+                };
+                q.options.forEach(o => {
+                    const b = document.createElement('div'); b.className = 'bubble-option'; b.innerText = o;
+                    b.onclick = () => {
+                        if (!this.res[q.id]) this.res[q.id] = [];
+                        if (!this.res[q.id].includes(o)) { this.res[q.id].push(o); redraw(); }
+                    };
+                    pool.appendChild(b);
+                });
+                w.appendChild(area); w.appendChild(pool); redraw();
+            }
+
+            buildNav(page, cont) {
+                const nav = document.createElement('div'); nav.className = 'nav-btns';
+                if (this.hist.length > 0) {
+                    const b = document.createElement('button'); b.className = 'btn-box'; b.innerText = "BACK";
+                    b.onclick = () => { this.curr = this.hist.pop(); this.render(); };
+                    nav.appendChild(b);
+                }
+                const n = document.createElement('button'); n.className = 'btn-box'; 
+                n.innerText = (page.id.startsWith('BRANCH') || page.isEnd) ? "SUBMIT" : "NEXT";
+                n.onclick = () => {
+                    if (this.validate(page)) {
+                        if (page.id.startsWith('BRANCH') || page.isEnd) { this.submit(); }
+                        else {
+                            this.hist.push(this.curr);
+                            // Page 3 Logic Gate
+                            this.curr = (this.curr === 'p3' && this.branch) ? this.branch : page.nextPage;
+                            this.render();
+                        }
+                    }
+                };
+                nav.appendChild(n);
+                cont.appendChild(nav);
+            }
+
+            async submit() {
+                document.getElementById('surveyContainer').innerHTML = "<h1>SYNCING...</h1>";
+                const p = {};
+                for (let k in this.res) p[k] = Array.isArray(this.res[k]) ? this.res[k].join(', ') : this.res[k];
+                try {
+                    await fetch(this.URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(p) });
+                    document.getElementById('surveyContainer').innerHTML = "<h1>SUCCESS</h1><p>Response logged.</p>";
+                } catch (e) { alert("Error."); }
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => { new SurveyApp(surveyData).init(); });
     </script>
 </body>
 </html>
