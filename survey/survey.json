@@ -1,0 +1,531 @@
+{
+    "pages": [
+        {
+            "id": "p1",
+            "pageName": "Welcome to Logikos.in",
+            "nextPage": "p2",
+            "questions": [
+                {
+                    "id": "intro",
+                    "type": "InfoBox",
+                    "content": "Logikos.in is a platform designed to simplify how creators build and how service providers grow. We are perfecting an automated cost engine that provides instant, transparent pricing for 3D printing and manufacturing services. This interactive survey will ask tailored questions based on your awareness and use of 3D printing. Estimated time : 5mins."
+                },
+                {
+                    "id": "email",
+                    "type": "DESQ",
+                    "inputType": "email",
+                    "label": "To get started, please enter your email. This will serve as your unique identity on Logikos.in and allow us to send you a summary of your results.",
+                    "required": true
+                }
+            ]
+        },
+        {
+            "id": "p2",
+            "pageName": "BASIC INFORMATION",
+            "nextPage": "p3",
+            "questions": [
+                {
+                    "id": "hear",
+                    "type": "MCQ_1",
+                    "label": "How did you hear about our platform?",
+                    "options": [
+                        "Referral",
+                        "Social Media",
+                        "Ads",
+                        "Others"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "cat",
+                    "type": "MCQ_Logic",
+                    "label": "Which category best describes you",
+                    "options": [
+                        "Design/Manufacturing/Architecture &ID/Engineering professional",
+                        "Student/Researcher",
+                        "Hobbyist/DIYers",
+                        "Startup/Business Owner",
+                        "Others"
+                    ],
+                    "logic_map": {
+                        "Hobbyist/DIYers": "BRANCH_A",
+                        "Design/Manufacturing/Architecture &ID/Engineering professional": "BRANCH_B",
+                        "Startup/Business Owner": "BRANCH_C",
+                        "Student/Researcher": "BRANCH_D"
+                    },
+                    "required": true
+                },
+                {
+                    "id": "loc",
+                    "type": "MCQ_1",
+                    "label": "Where are you located",
+                    "options": [
+                        "Ahmedabad/Surat/Vadodara/Rajkot",
+                        "Other places in Gujarat",
+                        "Outside Gujarat",
+                        "Outside India"
+                    ],
+                    "required": true
+                }
+            ]
+        },
+        {
+            "id": "p3",
+            "pageName": "Identity & Relevance",
+            "nextPage": "THANK_YOU",
+            "questions": [
+                {
+                    "id": "used_before",
+                    "type": "MCQ_1",
+                    "label": "Have you used 3D printing/prototyping or machining services before?",
+                    "options": [
+                        "Yes",
+                        "No"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "purpose",
+                    "type": "MCQ_Multi",
+                    "label": "What purposes do you need 3D printed parts for?",
+                    "options": [
+                        "Academic projects",
+                        "Professional projects",
+                        "Personalized gifting",
+                        "Decor",
+                        "Toys/Entertainment",
+                        "Repair work",
+                        "Others"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "act",
+                    "type": "List1",
+                    "label": "What type of Activities do you engage in or would like to engage in to fulfil the above purpose?",
+                    "options": [
+                        "Product Design",
+                        "STEM Education",
+                        "Product development",
+                        "Customized gifting",
+                        "Outsourcing 3D printing",
+                        "Inhouse 3D printing",
+                        "Bulk Gifting",
+                        "Electronic part mounting",
+                        "RC Hobby",
+                        "Drones",
+                        "Automation",
+                        "Testing",
+                        "Prototyping",
+                        "Enclosure design",
+                        "Tools/Fixtures",
+                        "Lighting/Lamps",
+                        "3D Model generation/modification/download",
+                        "Online downloads/purchases (Thingiverse/Printables/Grab CAD/Etsy,etc)"
+                    ],
+                    "required": true
+                }
+            ]
+        },
+        {
+            "id": "BRANCH_A",
+            "pageName": "Hobbyist / DIYers Details",
+            "nextPage": "THANK_YOU",
+            "questions": [
+                {
+                    "id": "h9",
+                    "type": "MCQ_Multi",
+                    "label": "What type of projects do you work on",
+                    "options": [
+                        "Prototypes",
+                        "Art",
+                        "Gadgets",
+                        "Lighting",
+                        "Mountings",
+                        "Mechanisms",
+                        "Drones",
+                        "RC vehicles",
+                        "Others"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "h10",
+                    "type": "MCQ_Multi",
+                    "label": "How do you develop concepts?",
+                    "options": [
+                        "CAD software",
+                        "3D Models",
+                        "AI tools",
+                        "Drawings"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "h11",
+                    "type": "MCQ_1",
+                    "label": "How often do you source parts online?",
+                    "options": [
+                        "Never",
+                        "Rarely",
+                        "Monthly",
+                        "Frequently"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "h12",
+                    "type": "MCQ_Multi",
+                    "label": "How do you estimate cost?",
+                    "options": [
+                        "Price lists",
+                        "Manual calculation",
+                        "Online calculators",
+                        "Consult expert"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "h13",
+                    "type": "MCQ_1",
+                    "label": "Do you compare multiple suppliers before ordering?",
+                    "options": [
+                        "Yes",
+                        "No"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "h14",
+                    "type": "MCQ_1",
+                    "label": "Interested in personalised tutorials?",
+                    "options": [
+                        "Yes",
+                        "No"
+                    ],
+                    "required": true
+                }
+            ]
+        },
+        {
+            "id": "BRANCH_B",
+            "pageName": "Professional Details",
+            "nextPage": "THANK_YOU",
+            "questions": [
+                {
+                    "id": "p9",
+                    "type": "MCQ_1",
+                    "label": "What type of work are you involved in?",
+                    "options": [
+                        "Product/Part design",
+                        "Architecture & Interior Design",
+                        "Manufacturing",
+                        "Art project"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "p10",
+                    "type": "MCQ_1",
+                    "label": "What stage of the business cycle are your projects usually in?",
+                    "options": [
+                        "Concept",
+                        "Prototype",
+                        "Testing",
+                        "Production"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "p11",
+                    "type": "MCQ_1",
+                    "label": "Do you require tight tolerances?",
+                    "options": [
+                        "Yes",
+                        "No"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "p12",
+                    "type": "MCQ_Multi",
+                    "label": "How do you develop design guidelines?",
+                    "options": [
+                        "CAD software",
+                        "3D Models",
+                        "AI tools",
+                        "Drawings"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "p13",
+                    "type": "MCQ_1",
+                    "label": "How often do you source parts online?",
+                    "options": [
+                        "Never",
+                        "Rarely",
+                        "Monthly",
+                        "Frequently"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "p14",
+                    "type": "MCQ_Multi",
+                    "label": "How do you estimate cost?",
+                    "options": [
+                        "Price lists",
+                        "Manual calculation",
+                        "Online calculators",
+                        "Consult expert"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "p15",
+                    "type": "MCQ_1",
+                    "label": "Do you compare multiple suppliers?",
+                    "options": [
+                        "Yes",
+                        "No"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "p16",
+                    "type": "MCQ_1",
+                    "label": "Interested in personalised tutorials?",
+                    "options": [
+                        "Yes",
+                        "No"
+                    ],
+                    "required": true
+                }
+            ]
+        },
+        {
+            "id": "BRANCH_C",
+            "pageName": "Startup / Business Owner",
+            "nextPage": "THANK_YOU",
+            "questions": [
+                {
+                    "id": "s9",
+                    "type": "MCQ_1",
+                    "label": "Are you developing a new product?",
+                    "options": [
+                        "Yes",
+                        "No"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "s10",
+                    "type": "MCQ_Multi",
+                    "label": "How do you develop concepts?",
+                    "options": [
+                        "CAD software",
+                        "3D Models",
+                        "AI tools",
+                        "Drawings"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "s11",
+                    "type": "MCQ_1",
+                    "label": "How often do you source parts online?",
+                    "options": [
+                        "Never",
+                        "Rarely",
+                        "Monthly",
+                        "Frequently"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "s12",
+                    "type": "MCQ_Multi",
+                    "label": "How do you estimate cost?",
+                    "options": [
+                        "Price lists",
+                        "Manual calculation",
+                        "Online calculators",
+                        "Consult expert"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "s13",
+                    "type": "MCQ_1",
+                    "label": "Do you compare multiple suppliers?",
+                    "options": [
+                        "Yes",
+                        "No"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "s14",
+                    "type": "MCQ_1",
+                    "label": "What influences decisions most?",
+                    "options": [
+                        "Price",
+                        "Speed",
+                        "Quality",
+                        "Reliability"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "s15",
+                    "type": "MCQ_1",
+                    "label": "Would bulk discounts motivate repeat orders?",
+                    "options": [
+                        "Yes",
+                        "No"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "s16",
+                    "type": "MCQ_1",
+                    "label": "Want to receive customer leads for services?",
+                    "options": [
+                        "Yes",
+                        "No"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "s17",
+                    "type": "MCQ_1",
+                    "label": "Interested in personalised tutorials?",
+                    "options": [
+                        "Yes",
+                        "No"
+                    ],
+                    "required": true
+                }
+            ]
+        },
+        {
+            "id": "BRANCH_D",
+            "pageName": "Student / Researcher",
+            "nextPage": "THANK_YOU",
+            "questions": [
+                {
+                    "id": "st9",
+                    "type": "MCQ_1",
+                    "label": "What area of Study/Research are you in?",
+                    "options": [
+                        "Engineering",
+                        "Design",
+                        "Arts",
+                        "Architecture",
+                        "Interior Design"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "st10",
+                    "type": "MCQ_1",
+                    "label": "Do you use 3D modelling tools?",
+                    "options": [
+                        "Yes",
+                        "No"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "st11",
+                    "type": "MCQ_1",
+                    "label": "How often do you source parts online?",
+                    "options": [
+                        "Never",
+                        "Rarely",
+                        "Monthly",
+                        "Frequently"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "st12",
+                    "type": "MCQ_Multi",
+                    "label": "How do you estimate cost?",
+                    "options": [
+                        "Price lists",
+                        "Manual calculation",
+                        "Online calculators",
+                        "Consult expert"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "st13",
+                    "type": "MCQ_1",
+                    "label": "Do you compare multiple suppliers?",
+                    "options": [
+                        "Yes",
+                        "No"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "st14",
+                    "type": "MCQ_1",
+                    "label": "What influences decisions most?",
+                    "options": [
+                        "Price",
+                        "Speed",
+                        "Quality",
+                        "Reliability"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "st15",
+                    "type": "MCQ_1",
+                    "label": "Would bulk discounts motivate repeat orders?",
+                    "options": [
+                        "Yes",
+                        "No"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "st16",
+                    "type": "MCQ_1",
+                    "label": "Want to receive customer leads?",
+                    "options": [
+                        "Yes",
+                        "No"
+                    ],
+                    "required": true
+                },
+                {
+                    "id": "st17",
+                    "type": "MCQ_1",
+                    "label": "Interested in personalised tutorials?",
+                    "options": [
+                        "Yes",
+                        "No"
+                    ],
+                    "required": true
+                }
+            ]
+        },
+        {
+            "id": "THANK_YOU",
+            "pageName": "End of Survey",
+            "isEnd": true,
+            "questions": [
+                {
+                    "id": "final",
+                    "type": "InfoBox",
+                    "content": "Thank you for your time. Your insights are valuable for perfecting the Logikos engine."
+                }
+            ]
+        }
+    ]
+}
