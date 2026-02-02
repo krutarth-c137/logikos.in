@@ -5,7 +5,6 @@ class SurveyEngine {
         this.responses = {};
         this.history = [];
         this.selectedBranch = null;
-        // PASTE YOUR GOOGLE WEB APP URL HERE
         this.SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyoZvAvwTUydT6OCABqfdK5YSKBQDgEgVP7-vKgqGaFAjn0yMgfAn1GjZ5jeLYb_SUf7w/exec";
     }
 
@@ -36,11 +35,10 @@ class SurveyEngine {
             } else {
                 const label = document.createElement('label');
                 label.className = 'q-text';
-                // Validation error message placeholder
-                label.innerHTML = `${q.label} <span class="error-msg" style="color:red; display:none; font-size:0.8rem; font-weight:normal; margin-left:10px;">*this field is mandatory</span>`;
+                label.innerHTML = `${q.label} <span class="error-msg" style="display:none;">*this field is mandatory</span>`;
                 wrapper.appendChild(label);
                 
-                if (q.type === 'DESQ') this.buildDESQ(q, wrapper);
+                if (q.id === 'email') this.buildDESQ(q, wrapper);
                 else if (q.type === 'MCQ_1' || q.type === 'MCQ_Logic') this.buildMCQ(q, wrapper, false);
                 else if (q.type === 'MCQ_Multi') this.buildMCQ(q, wrapper, true);
                 else if (q.type === 'List1') this.buildList1(q, wrapper);
@@ -51,7 +49,6 @@ class SurveyEngine {
         this.renderNav(page, container);
     }
 
-    // --- Validation Logic ---
     validatePage(page) {
         let isValid = true;
         page.questions.forEach(q => {
@@ -61,8 +58,7 @@ class SurveyEngine {
                 const errorSpan = block ? block.querySelector('.error-msg') : null;
                 
                 let hasValue = false;
-                if (q.type === 'DESQ') {
-                    // Specific check for email format on p1
+                if (q.id === 'email') {
                     hasValue = res && res.includes('@');
                 } else if (Array.isArray(res)) {
                     hasValue = res.length > 0;
@@ -85,14 +81,11 @@ class SurveyEngine {
 
     buildDESQ(q, w) {
         const i = document.createElement('input');
-        i.type = q.inputType || 'text';
-        i.className = 'logikos-input'; // Brand class
+        i.type = 'email';
+        i.className = 'logikos-input';
+        i.placeholder = "Enter your unique email ID";
         i.value = this.responses[q.id] || '';
-        i.oninput = (e) => {
-            this.responses[q.id] = e.target.value;
-            const err = w.querySelector('.error-msg');
-            if (err) err.style.display = 'none';
-        };
+        i.oninput = (e) => this.responses[q.id] = e.target.value;
         w.appendChild(i);
     }
 
@@ -103,8 +96,6 @@ class SurveyEngine {
             const checked = isMulti ? (this.responses[q.id] || []).includes(opt) : this.responses[q.id] === opt;
             r.innerHTML = `<input type="${isMulti?'checkbox':'radio'}" name="${q.id}" ${checked?'checked':''}> ${opt}`;
             r.querySelector('input').onchange = (e) => {
-                const err = w.querySelector('.error-msg');
-                if (err) err.style.display = 'none';
                 if (!isMulti) {
                     this.responses[q.id] = opt;
                     if(q.type === 'MCQ_Logic') this.selectedBranch = q.logic_map[opt];
@@ -131,10 +122,6 @@ class SurveyEngine {
                 };
                 area.appendChild(b);
             });
-            if (this.responses[q.id]?.length > 0) {
-                const err = w.querySelector('.error-msg');
-                if (err) err.style.display = 'none';
-            }
         };
         q.options.forEach(opt => {
             const b = document.createElement('div'); b.className = 'bubble-option'; b.innerText = opt;
@@ -167,7 +154,8 @@ class SurveyEngine {
                     this.submitData();
                 } else {
                     this.history.push(this.currentPageId);
-                    this.currentPageId = (this.currentPageId === 'p3' && this.selectedBranch) ? this.selectedBranch : page.nextPage;
+                    // Handle logic branching
+                    this.currentPageId = (page.id === 'p2' && this.selectedBranch) ? this.selectedBranch : page.nextPage;
                     this.renderPage();
                 }
             }
@@ -178,10 +166,10 @@ class SurveyEngine {
 
     async submitData() {
         const container = document.getElementById('surveyContainer');
-        container.innerHTML = "<h1>SYNCING...</h1>";
+        container.innerHTML = "<h1>SYNCING DATA...</h1><p>Please wait while we secure your response.</p>";
 
-        // Map keys to match your Spreadsheet Headers
         const payload = {};
+        // Map survey responses directly to alphanumeric keys from your Spreadsheet
         for (const key in this.responses) {
             payload[key] = Array.isArray(this.responses[key]) ? this.responses[key].join(', ') : this.responses[key];
         }
@@ -192,10 +180,9 @@ class SurveyEngine {
                 mode: 'no-cors',
                 body: JSON.stringify(payload)
             });
-            container.innerHTML = "<h1>THANK YOU</h1><p>Your insights have been recorded.</p>";
+            container.innerHTML = "<h1>THANK YOU</h1><p>Your insights have been recorded. <br><br> <a href='https://logikos.in' class='btn-box' style='text-decoration:none;'>RETURN HOME</a></p>";
         } catch (error) {
-            console.error(error);
-            container.innerHTML = "<h1>ERROR</h1><p>Failed to sync. Please check your connection.</p>";
+            container.innerHTML = "<h1>SYNC FAILED</h1><p>Could not connect to the database. Check your internet connection.</p>";
         }
     }
 }
