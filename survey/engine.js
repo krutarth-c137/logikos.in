@@ -5,7 +5,7 @@ class SurveyEngine {
         this.responses = {};
         this.history = [];
         this.selectedBranch = null;
-        this.SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyoZvAvwTUydT6OCABqfdK5YSKBQDgEgVP7-vKgqGaFAjn0yMgfAn1GjZ5jeLYb_SUf7w/exec";
+        this.URL = "https://script.google.com/macros/s/AKfycbyoZvAvwTUydT6OCABqfdK5YSKBQDgEgVP7-vKgqGaFAjn0yMgfAn1GjZ5jeLYb_SUf7w/exec";
     }
 
     init() { this.renderPage(); }
@@ -52,7 +52,6 @@ class SurveyEngine {
                 const res = this.responses[q.id];
                 const block = document.getElementById(`block-${q.id}`);
                 const hasVal = Array.isArray(res) ? res.length > 0 : (res && res !== "");
-                
                 if (!hasVal) {
                     valid = false;
                     block.querySelector('.error-msg').style.display = 'inline';
@@ -69,7 +68,6 @@ class SurveyEngine {
     buildDESQ(q, w) {
         const i = document.createElement('input');
         i.className = 'logikos-input';
-        i.placeholder = "Enter response...";
         i.value = this.responses[q.id] || '';
         i.oninput = (e) => this.responses[q.id] = e.target.value;
         w.appendChild(i);
@@ -121,28 +119,22 @@ class SurveyEngine {
     renderNav(page, container) {
         const nav = document.createElement('div');
         nav.className = 'nav-btns';
-        
         if (this.history.length > 0) {
             const b = document.createElement('button'); b.className = 'btn-box'; b.innerText = "BACK";
             b.onclick = () => { this.currentPageId = this.history.pop(); this.renderPage(); };
             nav.appendChild(b);
         }
-
         const n = document.createElement('button');
         n.className = 'btn-box';
         n.innerText = (page.id.startsWith('BRANCH') || page.isEnd) ? "SUBMIT" : "NEXT";
         n.onclick = () => {
             if (this.validate(page)) {
-                if (page.id.startsWith('BRANCH') || page.isEnd) {
-                    this.submit();
-                } else {
+                if (page.id.startsWith('BRANCH') || page.isEnd) { this.submit(); } 
+                else {
                     this.history.push(this.currentPageId);
-                    // LOGIC FIX: Force Page 3 before branching
-                    if (page.id === 'p3' && this.selectedBranch) {
-                        this.currentPageId = this.selectedBranch;
-                    } else {
-                        this.currentPageId = page.nextPage;
-                    }
+                    // NAVIGATION FIX: Wait for p3 before branching
+                    if (page.id === 'p3' && this.selectedBranch) this.currentPageId = this.selectedBranch;
+                    else this.currentPageId = page.nextPage;
                     this.renderPage();
                 }
             }
@@ -158,8 +150,8 @@ class SurveyEngine {
             payload[key] = Array.isArray(this.responses[key]) ? this.responses[key].join(', ') : this.responses[key];
         }
         try {
-            await fetch(this.SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            document.getElementById('surveyContainer').innerHTML = "<h1>THANK YOU</h1><p>Your insights are recorded.</p>";
-        } catch (e) { alert("Sync Error. Please try again."); }
+            await fetch(this.URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+            document.getElementById('surveyContainer').innerHTML = "<h1>SUCCESS</h1><p>Recorded to Google Sheet.</p>";
+        } catch (e) { alert("Error saving data."); }
     }
 }
