@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logikos | Survey Creator</title>
+    <link rel="stylesheet" href="creator.css">
+</head>
+<body>
+    <header id="admin-header">
+        <div class="logo">LOGIKOS CREATOR</div>
+        <div class="header-controls">
+            <div class="mode-switch">
+                <label>CREATOR</label>
+                <input type="checkbox" id="previewToggle">
+                <label>PREVIEW</label>
+            </div>
+            <button class="btn-action" onclick="app.handleUpload()">UPLOAD JSON</button>
+            <button class="btn-action" onclick="app.downloadJSON()">DOWNLOAD JSON</button>
+            <input type="file" id="fileInput" hidden>
+        </div>
+    </header>
+
+    <div class="admin-layout">
+        <aside id="sidebar">
+            <div class="page-list" id="pageList">
+                </div>
+            <button class="btn-add-page" onclick="app.addPage()">+ ADD PAGE</button>
+        </aside>
+
+        <main id="editorCanvas">
+            <div class="empty-state">Select a page to edit</div>
+        </main>
+    </div>
+
+    <script src="creator.js"></script>
+</body>
+</html>
