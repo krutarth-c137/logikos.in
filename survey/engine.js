@@ -1,157 +1,303 @@
 class SurveyEngine {
     constructor(data) {
         this.data = data;
-        this.currentPageId = "p1";
+        this.pages = data.pages || [];
+        this.currentPageId = this.pages[0]?.id || null;
+
         this.responses = {};
         this.history = [];
-        this.selectedBranch = null;
-        this.URL = "https://script.google.com/macros/s/AKfycbyoZvAvwTUydT6OCABqfdK5YSKBQDgEgVP7-vKgqGaFAjn0yMgfAn1GjZ5jeLYb_SUf7w/exec";
+
+        // Branch handling
+        this.branchTarget = null;
     }
 
-    init() { this.renderPage(); }
+    init() {
+        if (!this.currentPageId) {
+            console.error("Survey has no pages");
+            return;
+        }
+        this.renderPage();
+    }
+
+    /* =========================
+       PAGE RENDERING
+    ========================== */
 
     renderPage() {
-        const container = document.getElementById('surveyContainer');
-        container.innerHTML = '';
-        const page = this.data.pages.find(p => p.id === this.currentPageId);
+        const container = document.getElementById("surveyContainer");
+        container.innerHTML = "";
 
-        const h = document.createElement(page.id === 'p1' ? 'h1' : 'h2');
-        h.innerText = page.pageName;
-        container.appendChild(h);
+        const page = this.getCurrentPage();
+        if (!page) return;
 
+        // END PAGE
+        if (page.isEnd) {
+            this.renderEnd(container, page);
+            return;
+        }
+
+        // PAGE TITLE
+        const title = document.createElement(page.id === this.pages[0].id ? "h1" : "h2");
+        title.innerText = page.pageName || "";
+        container.appendChild(title);
+
+        // QUESTIONS
         page.questions.forEach(q => {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'question-block';
-            wrapper.id = `block-${q.id}`;
-            if (this.currentPageId === 'p1') wrapper.style.textAlign = 'center';
+            this.renderQuestion(container, q);
+        });
 
-            if (q.type === 'InfoBox') {
-                const p = document.createElement('p');
-                p.className = (page.id === 'p1') ? 'welcome-desc' : '';
-                p.innerText = q.content;
-                wrapper.appendChild(p);
-            } else {
-                const label = document.createElement('label');
-                label.className = 'q-text';
-                label.innerHTML = `${q.label} <span class="error-msg">*mandatory</span>`;
-                wrapper.appendChild(label);
-                
-                if (q.type === 'DESQ') this.buildDESQ(q, wrapper);
-                else if (q.type.startsWith('MCQ')) this.buildMCQ(q, wrapper, q.type==='MCQ_Multi');
-                else if (q.type === 'List1') this.buildList1(q, wrapper);
-            }
+        // NAVIGATION
+        this.renderNav(container, page);
+    }
+
+    getCurrentPage() {
+        return this.pages.find(p => p.id === this.currentPageId);
+    }
+
+    /* =========================
+       QUESTION RENDERING
+    ========================== */
+
+    renderQuestion(container, q) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "question-block";
+        wrapper.id = `block-${q.id}`;
+
+        // INFOBOX (display-only)
+        if (q.type === "InfoBox") {
+            wrapper.innerHTML = `<p>${q.content || ""}</p>`;
             container.appendChild(wrapper);
-        });
-        this.renderNav(page, container);
+            return;
+        }
+
+        // LABEL
+        const label = document.createElement("label");
+        label.className = "q-text";
+        label.innerHTML = q.label || "";
+        if (q.required) {
+            label.innerHTML += ` <span class="error-msg">*this field is mandatory</span>`;
+        }
+        wrapper.appendChild(label);
+
+        // INPUT TYPES
+        switch (q.type) {
+            case "DESQ":
+                this.renderDESQ(q, wrapper);
+                break;
+
+            case "MCQ_1":
+            case "MCQ_Logic":
+                this.renderMCQ(q, wrapper, false);
+                break;
+
+            case "MCQ_Multi":
+                this.renderMCQ(q, wrapper, true);
+                break;
+
+            case "List1":
+                this.renderList1(q, wrapper);
+                break;
+
+            default:
+                console.warn("Unsupported question type:", q.type);
+        }
+
+        container.appendChild(wrapper);
     }
 
-    validate(page) {
-        let valid = true;
-        page.questions.forEach(q => {
-            if (q.required) {
-                const res = this.responses[q.id];
-                const block = document.getElementById(`block-${q.id}`);
-                const hasVal = Array.isArray(res) ? res.length > 0 : (res && res !== "");
-                if (!hasVal) {
-                    valid = false;
-                    block.querySelector('.error-msg').style.display = 'inline';
-                    block.style.borderLeft = "4px solid red";
-                } else {
-                    block.querySelector('.error-msg').style.display = 'none';
-                    block.style.borderLeft = "4px solid transparent";
-                }
-            }
-        });
-        return valid;
+    renderDESQ(q, wrapper) {
+        const input = document.createElement("input");
+        input.type = q.inputType || "text";
+        input.value = this.responses[q.id] || "";
+
+        input.oninput = e => {
+            this.responses[q.id] = e.target.value.trim();
+            wrapper.classList.remove("invalid");
+        };
+
+        wrapper.appendChild(input);
     }
 
-    buildDESQ(q, w) {
-        const i = document.createElement('input');
-        i.className = 'logikos-input';
-        i.value = this.responses[q.id] || '';
-        i.oninput = (e) => this.responses[q.id] = e.target.value;
-        w.appendChild(i);
-    }
-
-    buildMCQ(q, w, isMulti) {
-        const bundle = document.createElement('div');
-        bundle.className = 'option-bundle';
+    renderMCQ(q, wrapper, isMulti) {
         q.options.forEach(opt => {
-            const r = document.createElement('label');
-            r.className = 'option-row';
-            const checked = isMulti ? (this.responses[q.id] || []).includes(opt) : this.responses[q.id] === opt;
-            r.innerHTML = `<input type="${isMulti?'checkbox':'radio'}" name="${q.id}" ${checked?'checked':''}> ${opt}`;
-            r.querySelector('input').onchange = (e) => {
-                if (!isMulti) {
-                    this.responses[q.id] = opt;
-                    if(q.type === 'MCQ_Logic') this.selectedBranch = q.logic_map[opt];
+            const row = document.createElement("label");
+            row.className = "option-row";
+
+            const input = document.createElement("input");
+            input.type = isMulti ? "checkbox" : "radio";
+            input.name = q.id;
+
+            if (isMulti) {
+                input.checked = (this.responses[q.id] || []).includes(opt);
+            } else {
+                input.checked = this.responses[q.id] === opt;
+            }
+
+            input.onchange = () => {
+                wrapper.classList.remove("invalid");
+
+                if (isMulti) {
+                    if (!this.responses[q.id]) this.responses[q.id] = [];
+                    const idx = this.responses[q.id].indexOf(opt);
+                    idx > -1
+                        ? this.responses[q.id].splice(idx, 1)
+                        : this.responses[q.id].push(opt);
                 } else {
-                    if(!this.responses[q.id]) this.responses[q.id] = [];
-                    e.target.checked ? this.responses[q.id].push(opt) : this.responses[q.id] = this.responses[q.id].filter(i => i !== opt);
+                    this.responses[q.id] = opt;
+
+                    // LOGIC CAPTURE (navigation only, not rendering)
+                    if (q.type === "MCQ_Logic" && q.logic_map) {
+                        this.branchTarget = q.logic_map[opt] || null;
+                    }
                 }
             };
-            bundle.appendChild(r);
+
+            row.appendChild(input);
+            row.appendChild(document.createTextNode(` ${opt}`));
+            wrapper.appendChild(row);
         });
-        w.appendChild(bundle);
     }
 
-    buildList1(q, w) {
-        const area = document.createElement('div'); area.className = 'selection-area';
-        const pool = document.createElement('div'); pool.className = 'options-pool';
+    renderList1(q, wrapper) {
+        const area = document.createElement("div");
+        area.className = "selection-area";
+
+        const pool = document.createElement("div");
+        pool.className = "options-pool";
+
         const refresh = () => {
-            area.innerHTML = '';
+            area.innerHTML = "";
             (this.responses[q.id] || []).forEach(val => {
-                const b = document.createElement('div'); b.className = 'selected-bubble'; b.innerText = val;
-                area.appendChild(b);
+                const bubble = document.createElement("div");
+                bubble.className = "selected-bubble";
+                bubble.innerHTML = `${val} <span class="remove-btn">×</span>`;
+                bubble.querySelector(".remove-btn").onclick = () => {
+                    this.responses[q.id] = this.responses[q.id].filter(v => v !== val);
+                    refresh();
+                };
+                area.appendChild(bubble);
             });
         };
+
         q.options.forEach(opt => {
-            const b = document.createElement('div'); b.className = 'bubble-option'; b.innerText = opt;
-            b.onclick = () => {
-                if(!this.responses[q.id]) this.responses[q.id] = [];
-                if(!this.responses[q.id].includes(opt)) { this.responses[q.id].push(opt); refresh(); }
+            const bubble = document.createElement("div");
+            bubble.className = "bubble-option";
+            bubble.innerText = opt;
+
+            bubble.onclick = () => {
+                if (!this.responses[q.id]) this.responses[q.id] = [];
+                if (!this.responses[q.id].includes(opt)) {
+                    this.responses[q.id].push(opt);
+                    wrapper.classList.remove("invalid");
+                    refresh();
+                }
             };
-            pool.appendChild(b);
+
+            pool.appendChild(bubble);
         });
-        w.appendChild(area); w.appendChild(pool); refresh();
+
+        wrapper.appendChild(area);
+        wrapper.appendChild(pool);
+        refresh();
     }
 
-    renderNav(page, container) {
-        const nav = document.createElement('div');
-        nav.className = 'nav-btns';
+    /* =========================
+       NAVIGATION + VALIDATION
+    ========================== */
+
+    renderNav(container, page) {
+        const nav = document.createElement("div");
+        nav.className = "nav-btns";
+
+        // BACK
         if (this.history.length > 0) {
-            const b = document.createElement('button'); b.className = 'btn-box'; b.innerText = "BACK";
-            b.onclick = () => { this.currentPageId = this.history.pop(); this.renderPage(); };
-            nav.appendChild(b);
+            const back = document.createElement("button");
+            back.className = "btn-back";
+            back.innerText = "Back";
+            back.onclick = () => {
+                this.currentPageId = this.history.pop();
+                this.renderPage();
+            };
+            nav.appendChild(back);
+        } else {
+            nav.appendChild(document.createElement("span"));
         }
-        const n = document.createElement('button');
-        n.className = 'btn-box';
-        n.innerText = (page.id.startsWith('BRANCH') || page.isEnd) ? "SUBMIT" : "NEXT";
-        n.onclick = () => {
-            if (this.validate(page)) {
-                if (page.id.startsWith('BRANCH') || page.isEnd) { this.submit(); } 
-                else {
-                    this.history.push(this.currentPageId);
-                    // NAVIGATION FIX: Wait for p3 before branching
-                    if (page.id === 'p3' && this.selectedBranch) this.currentPageId = this.selectedBranch;
-                    else this.currentPageId = page.nextPage;
-                    this.renderPage();
-                }
+
+        // NEXT / SUBMIT
+        const next = document.createElement("button");
+        next.className = "btn-next";
+        next.innerText = this.isFinalPage(page) ? "Submit Survey" : "Next Page";
+
+        next.onclick = () => {
+            if (!this.validatePage(page)) return;
+
+            if (this.isFinalPage(page)) {
+                this.submitSurvey();
+                return;
             }
+
+            this.history.push(this.currentPageId);
+
+            if (this.branchTarget) {
+                this.currentPageId = this.branchTarget;
+                this.branchTarget = null;
+            } else {
+                this.currentPageId = page.nextPage;
+            }
+
+            this.renderPage();
         };
-        nav.appendChild(n);
+
+        nav.appendChild(next);
         container.appendChild(nav);
     }
 
-    async submit() {
-        document.getElementById('surveyContainer').innerHTML = "<h1>SYNCING...</h1>";
-        const payload = {};
-        for (const key in this.responses) {
-            payload[key] = Array.isArray(this.responses[key]) ? this.responses[key].join(', ') : this.responses[key];
-        }
-        try {
-            await fetch(this.URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            document.getElementById('surveyContainer').innerHTML = "<h1>SUCCESS</h1><p>Recorded to Google Sheet.</p>";
-        } catch (e) { alert("Error saving data."); }
+    isFinalPage(page) {
+        return !page.nextPage || page.nextPage === "THANK_YOU";
+    }
+
+    validatePage(page) {
+        let valid = true;
+
+        page.questions.forEach(q => {
+            if (!q.required || q.type === "InfoBox") return;
+
+            const val = this.responses[q.id];
+            const block = document.getElementById(`block-${q.id}`);
+
+            const answered =
+                typeof val === "string"
+                    ? val.length > 0
+                    : Array.isArray(val)
+                    ? val.length > 0
+                    : false;
+
+            if (!answered) {
+                block.classList.add("invalid");
+                valid = false;
+            }
+        });
+
+        return valid;
+    }
+
+    /* =========================
+       SUBMISSION + END
+    ========================== */
+
+    submitSurvey() {
+        console.log("Survey completed. Responses:", this.responses);
+        this.currentPageId = "THANK_YOU";
+        this.renderPage();
+    }
+
+    renderEnd(container, page) {
+        const msg = page.questions?.[0]?.content || "Thank you.";
+        container.innerHTML = `
+            <div class="thank-you-card">
+                <h1>Thank you for your time.</h1>
+                <p>${msg}</p>
+            </div>
+        `;
     }
 }
