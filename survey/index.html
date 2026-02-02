@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Logikos.in | Strategic Survey</title>
+    <style>
+        :root {
+            --primary: #000000;
+            --accent: #2563eb;
+            --error: #dc2626;
+            --bg: #ffffff;
+            --secondary-bg: #f8fafc;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--secondary-bg);
+            color: #1e293b;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .survey-container {
+            max-width: 850px;
+            margin: 40px auto;
+            background: var(--bg);
+            padding: 50px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
+        }
+
+        h1 {
+            font-size: 2rem;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+            color: var(--primary);
+        }
+
+        .question-block {
+            margin-bottom: 35px;
+            position: relative;
+        }
+
+        .q-text {
+            font-weight: 700;
+            display: block;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .error-msg {
+            color: var(--error);
+            font-size: 0.85rem;
+            font-weight: 400;
+            margin-left: 10px;
+            display: none;
+        }
+
+        .invalid .error-msg {
+            display: inline;
+        }
+
+        .option-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            cursor: pointer;
+            padding: 10px;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+
+        .option-row:hover {
+            background: #f1f5f9;
+            border-color: var(--border);
+        }
+
+        .option-row input {
+            margin-right: 15px;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+
+        .selection-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+            min-height: 60px;
+            padding: 15px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .selected-bubble {
+            background: #eff6ff;
+            border: 1px solid #3b82f6;
+            padding: 6px 14px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #1d4ed8;
+        }
+
+        .remove-btn {
+            margin-left: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--error);
+        }
+
+        .options-pool {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .bubble-option {
+            background: #fff;
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+
+        .nav-btns {
+            margin-top: 50px;
+            display: flex;
+            justify-content: space-between;
+            padding-top: 25px;
+            border-top: 1px solid var(--border);
+        }
+
+        button {
+            padding: 14px 35px;
+            cursor: pointer;
+            font-weight: 700;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: 0.2s;
+        }
+
+        .btn-next {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+        }
+
+        .btn-back {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: #64748b;
+        }
+
+        input[type="email"] {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        .thank-you-card {
+            text-align: center;
+        }
+
+        .calc-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 15px 30px;
+            background: var(--accent);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="survey-container" id="surveyContainer">
+    </div>
+    <script src="engine.js"></script>
+    <script>
+        fetch('survey.json').then(res => res.json()).then(data => {
+            new SurveyEngine(data).init();
+        });
+    </script>
+</body>
+
+</html>
