@@ -1,303 +1,283 @@
 class SurveyEngine {
     constructor(data) {
         this.data = data;
-        this.pages = data.pages || [];
-        this.currentPageId = this.pages[0]?.id || null;
-
+        this.state = "WELCOME"; // WELCOME, SURVEY, THANK_YOU
+        this.currPageIndex = 0;
         this.responses = {};
         this.history = [];
-
-        // Branch handling
-        this.branchTarget = null;
+        this.next_dest = null; // Stores the Gate jump target
+        this.SHEET_URL = "https://script.google.com/macros/s/AKfycbyoZvAvwTUydT6OCABqfdK5YSKBQDgEgVP7-vKgqGaFAjn0yMgfAn1GjZ5jeLYb_SUf7w/exec";
     }
 
     init() {
-        if (!this.currentPageId) {
-            console.error("Survey has no pages");
-            return;
-        }
-        this.renderPage();
+        this.render();
     }
 
-    /* =========================
-       PAGE RENDERING
-    ========================== */
+    render() {
+        const container = document.getElementById('surveyContainer');
+        container.innerHTML = '';
 
-    renderPage() {
-        const container = document.getElementById("surveyContainer");
-        container.innerHTML = "";
-
-        const page = this.getCurrentPage();
-        if (!page) return;
-
-        // END PAGE
-        if (page.isEnd) {
-            this.renderEnd(container, page);
-            return;
+        if (this.state === "WELCOME") {
+            this.renderWelcome(container);
+        } else if (this.state === "SURVEY") {
+            this.renderSurveyPage(container);
+        } else if (this.state === "THANK_YOU") {
+            this.renderThankYou(container);
         }
-
-        // PAGE TITLE
-        const title = document.createElement(page.id === this.pages[0].id ? "h1" : "h2");
-        title.innerText = page.pageName || "";
-        container.appendChild(title);
-
-        // QUESTIONS
-        page.questions.forEach(q => {
-            this.renderQuestion(container, q);
-        });
-
-        // NAVIGATION
-        this.renderNav(container, page);
     }
 
-    getCurrentPage() {
-        return this.pages.find(p => p.id === this.currentPageId);
-    }
+    // --- RENDERERS ---
 
-    /* =========================
-       QUESTION RENDERING
-    ========================== */
+    renderWelcome(container) {
+        const page = this.data.welcome_page;
+        container.innerHTML = `<h1>${page.title}</h1><p class="welcome-desc">${page.description}</p>`;
+        
+        // Render the single Des_Q on welcome page
+        const qWrapper = document.createElement('div');
+        qWrapper.className = 'question-block';
+        qWrapper.id = `q-${page.question.id}`;
+        this.renderDesQ(page.question, qWrapper);
+        container.appendChild(qWrapper);
 
-    renderQuestion(container, q) {
-        const wrapper = document.createElement("div");
-        wrapper.className = "question-block";
-        wrapper.id = `block-${q.id}`;
-
-        // INFOBOX (display-only)
-        if (q.type === "InfoBox") {
-            wrapper.innerHTML = `<p>${q.content || ""}</p>`;
-            container.appendChild(wrapper);
-            return;
-        }
-
-        // LABEL
-        const label = document.createElement("label");
-        label.className = "q-text";
-        label.innerHTML = q.label || "";
-        if (q.required) {
-            label.innerHTML += ` <span class="error-msg">*this field is mandatory</span>`;
-        }
-        wrapper.appendChild(label);
-
-        // INPUT TYPES
-        switch (q.type) {
-            case "DESQ":
-                this.renderDESQ(q, wrapper);
-                break;
-
-            case "MCQ_1":
-            case "MCQ_Logic":
-                this.renderMCQ(q, wrapper, false);
-                break;
-
-            case "MCQ_Multi":
-                this.renderMCQ(q, wrapper, true);
-                break;
-
-            case "List1":
-                this.renderList1(q, wrapper);
-                break;
-
-            default:
-                console.warn("Unsupported question type:", q.type);
-        }
-
-        container.appendChild(wrapper);
-    }
-
-    renderDESQ(q, wrapper) {
-        const input = document.createElement("input");
-        input.type = q.inputType || "text";
-        input.value = this.responses[q.id] || "";
-
-        input.oninput = e => {
-            this.responses[q.id] = e.target.value.trim();
-            wrapper.classList.remove("invalid");
-        };
-
-        wrapper.appendChild(input);
-    }
-
-    renderMCQ(q, wrapper, isMulti) {
-        q.options.forEach(opt => {
-            const row = document.createElement("label");
-            row.className = "option-row";
-
-            const input = document.createElement("input");
-            input.type = isMulti ? "checkbox" : "radio";
-            input.name = q.id;
-
-            if (isMulti) {
-                input.checked = (this.responses[q.id] || []).includes(opt);
-            } else {
-                input.checked = this.responses[q.id] === opt;
+        const nav = document.createElement('div');
+        nav.className = 'nav-btns';
+        const btn = document.createElement('button');
+        btn.className = 'btn-box';
+        btn.innerText = "START";
+        btn.onclick = () => {
+            if (this.validateQuestion(page.question)) {
+                this.state = "SURVEY";
+                this.currPageIndex = 0; // Start at p_prelim
+                this.render();
             }
+        };
+        nav.appendChild(btn);
+        container.appendChild(nav);
+    }
 
-            input.onchange = () => {
-                wrapper.classList.remove("invalid");
+    renderSurveyPage(container) {
+        const page = this.data.survey_pages[this.currPageIndex];
+        
+        const h2 = document.createElement('h2');
+        h2.innerText = page.title;
+        container.appendChild(h2);
 
-                if (isMulti) {
-                    if (!this.responses[q.id]) this.responses[q.id] = [];
-                    const idx = this.responses[q.id].indexOf(opt);
-                    idx > -1
-                        ? this.responses[q.id].splice(idx, 1)
-                        : this.responses[q.id].push(opt);
-                } else {
-                    this.responses[q.id] = opt;
+        page.questions.forEach(q => {
+            const w = document.createElement('div');
+            w.className = 'question-block';
+            w.id = `q-${q.id}`;
+            
+            // Label
+            const label = document.createElement('label');
+            label.className = 'q-text';
+            label.innerHTML = `${q.text} <span class="error-msg">*mandatory</span>`;
+            w.appendChild(label);
 
-                    // LOGIC CAPTURE (navigation only, not rendering)
-                    if (q.type === "MCQ_Logic" && q.logic_map) {
-                        this.branchTarget = q.logic_map[opt] || null;
-                    }
-                }
-            };
+            // Type Switch
+            if (q.type === 'Des_Q') this.renderDesQ(q, w);
+            else if (q.type === 'MCQ_1') this.renderMCQ1(q, w);
+            else if (q.type === 'MCQ_Multi') {
+                if (q.variant === 'bubble') this.renderBubble(q, w);
+                else this.renderMCQMulti(q, w);
+            }
+            else if (q.type === 'Gate') this.renderGate(q, w);
 
-            row.appendChild(input);
-            row.appendChild(document.createTextNode(` ${opt}`));
-            wrapper.appendChild(row);
+            // Handle "Other" text input visibility logic dynamically in the renderers
+            container.appendChild(w);
+        });
+
+        this.renderNav(container);
+    }
+
+    renderThankYou(container) {
+        const page = this.data.thank_you_page;
+        container.innerHTML = `<h1>${page.title}</h1><p class="welcome-desc">${page.note}</p>`;
+        
+        if (page.redirect_url) {
+            const btn = document.createElement('button');
+            btn.className = 'btn-box';
+            btn.innerText = "RETURN HOME";
+            btn.onclick = () => window.location.href = page.redirect_url;
+            container.appendChild(btn);
+        }
+    }
+
+    // --- QUESTION BUILDERS ---
+
+    renderDesQ(q, w) {
+        const i = document.createElement('input');
+        i.className = 'logikos-input';
+        i.value = this.responses[q.id] || '';
+        i.oninput = (e) => this.responses[q.id] = e.target.value;
+        w.appendChild(i);
+    }
+
+    renderMCQ1(q, w) {
+        q.options.forEach(opt => {
+            const l = document.createElement('label');
+            l.className = 'option-row';
+            const val = opt; 
+            const checked = this.responses[q.id] === val;
+            l.innerHTML = `<input type="radio" name="${q.id}" ${checked?'checked':''}> ${val}`;
+            l.querySelector('input').onchange = () => { this.responses[q.id] = val; };
+            w.appendChild(l);
         });
     }
 
-    renderList1(q, wrapper) {
-        const area = document.createElement("div");
-        area.className = "selection-area";
+    renderMCQMulti(q, w) {
+        q.options.forEach(opt => {
+            const l = document.createElement('label');
+            l.className = 'option-row';
+            const checked = (this.responses[q.id] || []).includes(opt);
+            l.innerHTML = `<input type="checkbox" name="${q.id}" ${checked?'checked':''}> ${opt}`;
+            l.querySelector('input').onchange = (e) => {
+                if (!this.responses[q.id]) this.responses[q.id] = [];
+                if (e.target.checked) this.responses[q.id].push(opt);
+                else this.responses[q.id] = this.responses[q.id].filter(x => x !== opt);
+            };
+            w.appendChild(l);
+        });
+    }
 
-        const pool = document.createElement("div");
-        pool.className = "options-pool";
-
+    renderBubble(q, w) {
+        const area = document.createElement('div'); area.className = 'selection-area';
+        const pool = document.createElement('div'); pool.className = 'options-pool';
+        
         const refresh = () => {
-            area.innerHTML = "";
+            area.innerHTML = '';
             (this.responses[q.id] || []).forEach(val => {
-                const bubble = document.createElement("div");
-                bubble.className = "selected-bubble";
-                bubble.innerHTML = `${val} <span class="remove-btn">×</span>`;
-                bubble.querySelector(".remove-btn").onclick = () => {
-                    this.responses[q.id] = this.responses[q.id].filter(v => v !== val);
+                const b = document.createElement('div'); b.className = 'selected-bubble'; b.innerText = val + " ✕";
+                b.onclick = () => {
+                    this.responses[q.id] = this.responses[q.id].filter(x => x !== val);
                     refresh();
                 };
-                area.appendChild(bubble);
+                area.appendChild(b);
             });
         };
 
         q.options.forEach(opt => {
-            const bubble = document.createElement("div");
-            bubble.className = "bubble-option";
-            bubble.innerText = opt;
-
-            bubble.onclick = () => {
+            const b = document.createElement('div'); b.className = 'bubble-option'; b.innerText = opt;
+            b.onclick = () => {
                 if (!this.responses[q.id]) this.responses[q.id] = [];
-                if (!this.responses[q.id].includes(opt)) {
-                    this.responses[q.id].push(opt);
-                    wrapper.classList.remove("invalid");
-                    refresh();
+                if (!this.responses[q.id].includes(opt)) { 
+                    this.responses[q.id].push(opt); 
+                    refresh(); 
                 }
             };
-
-            pool.appendChild(bubble);
+            pool.appendChild(b);
         });
-
-        wrapper.appendChild(area);
-        wrapper.appendChild(pool);
-        refresh();
+        w.appendChild(area); w.appendChild(pool); refresh();
     }
 
-    /* =========================
-       NAVIGATION + VALIDATION
-    ========================== */
-
-    renderNav(container, page) {
-        const nav = document.createElement("div");
-        nav.className = "nav-btns";
-
-        // BACK
-        if (this.history.length > 0) {
-            const back = document.createElement("button");
-            back.className = "btn-back";
-            back.innerText = "Back";
-            back.onclick = () => {
-                this.currentPageId = this.history.pop();
-                this.renderPage();
+    renderGate(q, w) {
+        q.options.forEach(opt => {
+            const l = document.createElement('label');
+            l.className = 'option-row';
+            // Option is an object {label, jump_to_page}
+            const val = opt.label;
+            const checked = this.responses[q.id] === val;
+            
+            l.innerHTML = `<input type="radio" name="${q.id}" ${checked?'checked':''}> ${val}`;
+            l.querySelector('input').onchange = () => { 
+                this.responses[q.id] = val;
+                this.next_dest = opt.jump_to_page; // Store the destination!
             };
-            nav.appendChild(back);
-        } else {
-            nav.appendChild(document.createElement("span"));
+            w.appendChild(l);
+        });
+    }
+
+    // --- NAVIGATION & VALIDATION ---
+
+    renderNav(container) {
+        const nav = document.createElement('div'); nav.className = 'nav-btns';
+        
+        // Back Button
+        if (this.history.length > 0) {
+            const b = document.createElement('button'); b.className = 'btn-box'; b.innerText = "BACK";
+            b.onclick = () => { 
+                this.currPageIndex = this.history.pop(); 
+                this.render(); 
+            };
+            nav.appendChild(b);
         }
 
-        // NEXT / SUBMIT
-        const next = document.createElement("button");
-        next.className = "btn-next";
-        next.innerText = this.isFinalPage(page) ? "Submit Survey" : "Next Page";
-
-        next.onclick = () => {
-            if (!this.validatePage(page)) return;
-
-            if (this.isFinalPage(page)) {
-                this.submitSurvey();
-                return;
+        // Next/Submit Button
+        const isEnd = this.currPageIndex >= this.data.survey_pages.length - 1 || this.data.survey_pages[this.currPageIndex].page_id.startsWith("BRANCH");
+        
+        const n = document.createElement('button');
+        n.className = 'btn-box';
+        n.innerText = isEnd ? "SUBMIT" : "NEXT";
+        
+        n.onclick = () => {
+            const page = this.data.survey_pages[this.currPageIndex];
+            if (this.validatePage(page)) {
+                if (isEnd) {
+                    this.submit();
+                } else {
+                    this.history.push(this.currPageIndex);
+                    
+                    // ROUTING LOGIC
+                    if (page.page_id === "p_prelim" && this.next_dest) {
+                        // Find index of the branch
+                        const targetIndex = this.data.survey_pages.findIndex(p => p.page_id === this.next_dest);
+                        if (targetIndex !== -1) this.currPageIndex = targetIndex;
+                        else console.error("Branch not found:", this.next_dest);
+                    } else {
+                        // Default Fallback (Linear)
+                        this.currPageIndex++;
+                    }
+                    this.render();
+                }
             }
-
-            this.history.push(this.currentPageId);
-
-            if (this.branchTarget) {
-                this.currentPageId = this.branchTarget;
-                this.branchTarget = null;
-            } else {
-                this.currentPageId = page.nextPage;
-            }
-
-            this.renderPage();
         };
-
-        nav.appendChild(next);
+        nav.appendChild(n);
         container.appendChild(nav);
     }
 
-    isFinalPage(page) {
-        return !page.nextPage || page.nextPage === "THANK_YOU";
-    }
-
     validatePage(page) {
-        let valid = true;
-
+        let ok = true;
         page.questions.forEach(q => {
-            if (!q.required || q.type === "InfoBox") return;
-
-            const val = this.responses[q.id];
-            const block = document.getElementById(`block-${q.id}`);
-
-            const answered =
-                typeof val === "string"
-                    ? val.length > 0
-                    : Array.isArray(val)
-                    ? val.length > 0
-                    : false;
-
-            if (!answered) {
-                block.classList.add("invalid");
-                valid = false;
-            }
+             if (!this.validateQuestion(q)) ok = false;
         });
-
-        return valid;
+        return ok;
     }
 
-    /* =========================
-       SUBMISSION + END
-    ========================== */
-
-    submitSurvey() {
-        console.log("Survey completed. Responses:", this.responses);
-        this.currentPageId = "THANK_YOU";
-        this.renderPage();
+    validateQuestion(q) {
+        if (!q.required) return true;
+        
+        const val = this.responses[q.id];
+        const hasVal = Array.isArray(val) ? val.length > 0 : (val && val !== "");
+        
+        const block = document.getElementById(`q-${q.id}`);
+        const err = block.querySelector('.error-msg');
+        
+        if (!hasVal) {
+            err.style.display = 'inline';
+            block.style.borderLeft = "4px solid #dc3545";
+            return false;
+        } else {
+            err.style.display = 'none';
+            block.style.borderLeft = "4px solid transparent";
+            return true;
+        }
     }
 
-    renderEnd(container, page) {
-        const msg = page.questions?.[0]?.content || "Thank you.";
-        container.innerHTML = `
-            <div class="thank-you-card">
-                <h1>Thank you for your time.</h1>
-                <p>${msg}</p>
-            </div>
-        `;
+    async submit() {
+        const container = document.getElementById('surveyContainer');
+        container.innerHTML = "<h1>SYNCING DATA...</h1>";
+        
+        // Flatten arrays for Google Sheets
+        const payload = {};
+        for (let k in this.responses) {
+            payload[k] = Array.isArray(this.responses[k]) ? this.responses[k].join(', ') : this.responses[k];
+        }
+
+        try {
+            await fetch(this.SHEET_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+            this.state = "THANK_YOU";
+            this.render();
+        } catch (e) {
+            container.innerHTML = "<h1>ERROR</h1><p>Connection failed.</p>";
+        }
     }
 }
