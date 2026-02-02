@@ -15,7 +15,7 @@ class SurveyEngine {
 
     render() {
         const container = document.getElementById('surveyContainer');
-        if (!container) return; // Safety check
+        if (!container) return;
         container.innerHTML = '';
 
         if (this.state === "WELCOME") {
@@ -38,7 +38,7 @@ class SurveyEngine {
         qWrapper.className = 'question-block';
         qWrapper.id = `q-${page.question.id}`;
 
-        // 2. FIXED: Create Label with Error Span (Crucial for Validation)
+        // 2. Create Label with Error Span
         const label = document.createElement('label');
         label.className = 'q-text';
         label.innerHTML = `${page.question.text} <span class="error-msg" style="display:none; color:#dc3545; font-size:0.8rem; margin-left:10px;">*mandatory</span>`;
@@ -56,7 +56,6 @@ class SurveyEngine {
         btn.innerText = "START";
         
         btn.onclick = () => {
-            // Now this validation won't crash because .error-msg exists
             if (this.validateQuestion(page.question)) {
                 this.state = "SURVEY";
                 this.currPageIndex = 0; 
@@ -68,7 +67,6 @@ class SurveyEngine {
     }
 
     renderSurveyPage(container) {
-        // Safety check to prevent crash if index is out of bounds
         if (!this.data.survey_pages || !this.data.survey_pages[this.currPageIndex]) {
             container.innerHTML = "<h1>Error: Page not found</h1>";
             return;
@@ -127,7 +125,6 @@ class SurveyEngine {
         i.value = this.responses[q.id] || '';
         i.oninput = (e) => {
             this.responses[q.id] = e.target.value;
-            // Clear error on type
             const err = w.querySelector('.error-msg');
             if(err) err.style.display = 'none';
         };
@@ -182,7 +179,6 @@ class SurveyEngine {
                 };
                 area.appendChild(b);
             });
-            // Clear error if items exist
             if ((this.responses[q.id] || []).length > 0) {
                  const err = w.querySelector('.error-msg');
                  if(err) err.style.display = 'none';
@@ -207,10 +203,109 @@ class SurveyEngine {
         q.options.forEach(opt => {
             const l = document.createElement('label');
             l.className = 'option-row';
-            // Option is an object {label, jump_to_page}
             const val = opt.label;
             const checked = this.responses[q.id] === val;
             
             l.innerHTML = `<input type="radio" name="${q.id}" ${checked?'checked':''}> ${val}`;
             l.querySelector('input').onchange = () => { 
-                this.responses
+                this.responses[q.id] = val;
+                this.next_dest = opt.jump_to_page; 
+                const err = w.querySelector('.error-msg');
+                if(err) err.style.display = 'none';
+            };
+            w.appendChild(l);
+        });
+    }
+
+    // --- NAVIGATION & VALIDATION ---
+
+    renderNav(container) {
+        const nav = document.createElement('div'); nav.className = 'nav-btns';
+        
+        // Back Button
+        if (this.history.length > 0) {
+            const b = document.createElement('button'); b.className = 'btn-box'; b.innerText = "BACK";
+            b.onclick = () => { 
+                this.currPageIndex = this.history.pop(); 
+                this.render(); 
+            };
+            nav.appendChild(b);
+        }
+
+        // Next/Submit Button
+        const isEnd = this.currPageIndex >= this.data.survey_pages.length - 1 || this.data.survey_pages[this.currPageIndex].page_id.startsWith("BRANCH");
+        
+        const n = document.createElement('button');
+        n.className = 'btn-box';
+        n.innerText = isEnd ? "SUBMIT" : "NEXT";
+        
+        n.onclick = () => {
+            const page = this.data.survey_pages[this.currPageIndex];
+            if (this.validatePage(page)) {
+                if (isEnd) {
+                    this.submit();
+                } else {
+                    this.history.push(this.currPageIndex);
+                    
+                    // ROUTING LOGIC
+                    if (page.page_id === "p_prelim" && this.next_dest) {
+                        const targetIndex = this.data.survey_pages.findIndex(p => p.page_id === this.next_dest);
+                        if (targetIndex !== -1) this.currPageIndex = targetIndex;
+                        else console.error("Branch not found:", this.next_dest);
+                    } else {
+                        this.currPageIndex++;
+                    }
+                    this.render();
+                }
+            }
+        };
+        nav.appendChild(n);
+        container.appendChild(nav);
+    }
+
+    validatePage(page) {
+        let ok = true;
+        page.questions.forEach(q => {
+             if (!this.validateQuestion(q)) ok = false;
+        });
+        return ok;
+    }
+
+    validateQuestion(q) {
+        if (!q.required) return true;
+        
+        const val = this.responses[q.id];
+        const hasVal = Array.isArray(val) ? val.length > 0 : (val && val !== "");
+        
+        const block = document.getElementById(`q-${q.id}`);
+        const err = block.querySelector('.error-msg');
+        
+        if (!hasVal) {
+            if(err) err.style.display = 'inline';
+            block.style.borderLeft = "4px solid #dc3545";
+            return false;
+        } else {
+            if(err) err.style.display = 'none';
+            block.style.borderLeft = "4px solid transparent";
+            return true;
+        }
+    }
+
+    async submit() {
+        const container = document.getElementById('surveyContainer');
+        container.innerHTML = "<h1>SYNCING DATA...</h1>";
+        
+        const payload = {};
+        for (let k in this.responses) {
+            payload[k] = Array.isArray(this.responses[k]) ? this.responses[k].join(', ') : this.responses[k];
+        }
+
+        try {
+            await fetch(this.SHEET_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+            this.state = "THANK_YOU";
+            this.render();
+        } catch (e) {
+            container.innerHTML = "<h1>ERROR</h1><p>Connection failed.</p>";
+        }
+    }
+}
