@@ -7,7 +7,112 @@
     <link rel="stylesheet" href="../css/main.css">
     <style>
         /* Survey-Specific Styling to ensure the engine looks professional */
-        main { display: flex; flex-direction: column; align-items: center; min-height: calc(100vh - 140px); }
+        main { display: flex; flex-direction: column; align-items: center; min-height: c<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logikos | Interactive Survey</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <style>
+        /* BRANDED LAYOUT SYNC */
+        main { display: flex; flex-direction: column; align-items: center; min-height: calc(100vh - 140px); background: #ffffff; }
+        #surveyContainer { width: 100%; max-width: 800px; text-align: center; padding-top: 20px; }
+        
+        /* BUNDLING & SPACING */
+        .question-block { margin-bottom: 40px; text-align: left; padding: 10px; border-left: 4px solid transparent; transition: 0.3s; }
+        .q-text { font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 5px; text-transform: uppercase; }
+        .error-msg { color: #dc3545; font-size: 0.8rem; font-weight: normal; margin-left: 10px; display: none; }
+        
+        /* LOGIKOS INPUT (Black Border) */
+        .logikos-input { width: 50%; padding: 12px; border: 2px solid #1a1a1a; margin: 10px auto; display: block; outline: none; text-align: center; }
+        
+        /* OPTION BUNDLES */
+        .option-bundle { display: flex; flex-direction: column; gap: 4px; }
+        .option-row { display: flex; align-items: center; padding: 4px 0; cursor: pointer; }
+        .option-row input { margin-right: 12px; width: 18px; height: 18px; accent-color: #1a1a1a; }
+
+        /* FIDGET BUTTONS */
+        .btn-box { padding: 12px 35px; border: 2px solid #1a1a1a; background: #fff; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: 0.1s; margin-top: 20px; }
+        .btn-box:active { transform: translateY(3px); background: #eeeeee; }
+        .nav-btns { display: flex; gap: 20px; justify-content: center; width: 100%; padding-bottom: 40px; }
+
+        /* SELECTION BUBBLES */
+        .selection-area { border: 1px solid #1a1a1a; padding: 10px; margin-bottom: 10px; min-height: 45px; display: flex; flex-wrap: wrap; gap: 8px; background: #fff; }
+        .selected-bubble { background: #1a1a1a; color: #fff; padding: 5px 12px; border-radius: 2px; font-size: 0.85rem; }
+        .options-pool { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .bubble-option { border: 1px solid #1a1a1a; padding: 6px 14px; cursor: pointer; font-size: 0.85rem; background: #fff; transition: 0.2s; }
+        .bubble-option:hover { background: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <header id="global-header"><div class="logo-container">LOGIKOS</div></header>
+
+    <main><div id="surveyContainer"></div></main>
+
+    <footer id="global-footer">
+        <div class="footer-content"><span>© 2026 Logikos.in</span><span>Contact: alogikos@gmail.com</span></div>
+    </footer>
+
+    <script src="engine.js"></script>
+    <script>
+        // EMBEDDED JSON: Prevents "Error Loading Survey"
+        const surveyData = {
+    "pages": [
+        {
+            "id": "p1",
+            "pageName": "Welcome to Logikos.in",
+            "nextPage": "p2",
+            "questions": [
+                { "id": "intro", "type": "InfoBox", "content": "Logikos.in is a platform designed to simplify how creators build and how service providers grow. Estimated time : 5mins." },
+                { "id": "E-mail", "type": "DESQ", "label": "Please enter your email to get started.", "required": true }
+            ]
+        },
+        {
+            "id": "p2",
+            "pageName": "BASIC INFORMATION",
+            "nextPage": "p3",
+            "questions": [
+                { "id": "Q1", "type": "MCQ_1", "label": "How did you hear about our platform?", "options": ["Referral", "Social Media", "Ads", "Others"], "required": true },
+                { "id": "Q2", "type": "MCQ_Logic", "label": "Which category best describes you", "options": ["Design/Manufacturing/Architecture &ID/Engineering professional", "Student/Researcher", "Hobbyist/DIYers", "Startup/Business Owner"], 
+                  "logic_map": { "Hobbyist/DIYers": "BRANCH_A", "Design/Manufacturing/Architecture &ID/Engineering professional": "BRANCH_B", "Startup/Business Owner": "BRANCH_C", "Student/Researcher": "BRANCH_D" }, "required": true },
+                { "id": "Q3", "type": "MCQ_1", "label": "Where are you located", "options": ["Ahmedabad/Surat/Vadodara/Rajkot", "Other places in Gujarat", "Outside Gujarat", "Outside India"], "required": true }
+            ]
+        },
+        {
+            "id": "p3",
+            "pageName": "Identity & Relevance",
+            "nextPage": "THANK_YOU",
+            "questions": [
+                { "id": "Q4", "type": "MCQ_1", "label": "Have you used 3D printing/prototyping or machining services before?", "options": ["Yes", "No"], "required": true },
+                { "id": "Q5", "type": "MCQ_Multi", "label": "What purposes do you need 3D printed parts for?", "options": ["Academic projects", "Professional projects", "Personalized gifting", "Decor", "Toys/Entertainment", "Repair work", "Others"], "required": true },
+                { "id": "Q6", "type": "List1", "label": "What type of Activities do you engage in?", "options": ["Product Design", "STEM Education", "Prototyping", "Testing", "Enclosure design"], "required": true }
+            ]
+        },
+        {
+            "id": "BRANCH_A",
+            "pageName": "Hobbyist Details",
+            "nextPage": "THANK_YOU",
+            "questions": [
+                { "id": "QA1", "type": "MCQ_Multi", "label": "What projects do you work on?", "options": ["Prototypes", "Art", "Gadgets", "Drones"], "required": true }
+            ]
+        },
+        {
+            "id": "THANK_YOU",
+            "pageName": "Success",
+            "isEnd": true,
+            "questions": [ { "id": "final", "type": "InfoBox", "content": "Thank you for your valuable time." } ]
+        }
+    ]
+};
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const app = new SurveyEngine(surveyData);
+            app.init();
+        });
+    </script>
+</body>
+</html>alc(100vh - 140px); }
         #surveyContainer { width: 100%; max-width: 800px; text-align: center; }
         .question-block { margin-bottom: 45px; text-align: left; padding: 20px; border-radius: 4px; transition: 0.3s; }
         .q-text { font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 10px; }
