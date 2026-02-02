@@ -148,21 +148,24 @@ class SurveyEngine {
         n.className = 'btn-box'; 
         n.innerText = (page.isEnd || page.id.startsWith('BRANCH')) ? "SUBMIT" : "NEXT";
         
-        n.onclick = () => {
-            if (this.validatePage(page)) {
-                if (page.isEnd || page.id.startsWith('BRANCH')) {
-                    this.submitData();
-                } else {
-                    this.history.push(this.currentPageId);
-                    // Handle logic branching
-                    this.currentPageId = (page.id === 'p2' && this.selectedBranch) ? this.selectedBranch : page.nextPage;
-                    this.renderPage();
-                }
+       n.onclick = () => {
+    if (this.validatePage(page)) {
+        if (page.isEnd || page.id.startsWith('BRANCH')) {
+            this.submitData();
+        } else {
+            this.history.push(this.currentPageId);
+            
+            // LOGIC FIX: Branching now occurs ONLY when leaving Page 3 (p3)
+            if (page.id === 'p3' && this.selectedBranch) {
+                this.currentPageId = this.selectedBranch;
+            } else {
+                this.currentPageId = page.nextPage;
             }
-        };
-        nav.appendChild(n);
-        container.appendChild(nav);
+            
+            this.renderPage();
+        }
     }
+};
 
     async submitData() {
         const container = document.getElementById('surveyContainer');
