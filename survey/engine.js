@@ -12,11 +12,8 @@ class SurveyEngine {
 
     renderPage() {
         const container = document.getElementById('surveyContainer');
-        if (!container) return;
         container.innerHTML = '';
-        
         const page = this.data.pages.find(p => p.id === this.currentPageId);
-        container.className = `page-${page.id}`;
 
         const h = document.createElement(page.id === 'p1' ? 'h1' : 'h2');
         h.innerText = page.pageName;
@@ -25,8 +22,9 @@ class SurveyEngine {
         page.questions.forEach(q => {
             const wrapper = document.createElement('div');
             wrapper.className = 'question-block';
-            wrapper.id = `block-${q.id}`; 
-            
+            wrapper.id = `block-${q.id}`;
+            if (this.currentPageId === 'p1') wrapper.style.textAlign = 'center';
+
             if (q.type === 'InfoBox') {
                 const p = document.createElement('p');
                 p.className = (page.id === 'p1') ? 'welcome-desc' : '';
@@ -35,61 +33,51 @@ class SurveyEngine {
             } else {
                 const label = document.createElement('label');
                 label.className = 'q-text';
-                label.innerHTML = `${q.label} <span class="error-msg" style="display:none;">*this field is mandatory</span>`;
+                label.innerHTML = `${q.label} <span class="error-msg">*mandatory</span>`;
                 wrapper.appendChild(label);
                 
-                if (q.id === 'email') this.buildDESQ(q, wrapper);
-                else if (q.type === 'MCQ_1' || q.type === 'MCQ_Logic') this.buildMCQ(q, wrapper, false);
-                else if (q.type === 'MCQ_Multi') this.buildMCQ(q, wrapper, true);
+                if (q.type === 'DESQ') this.buildDESQ(q, wrapper);
+                else if (q.type.startsWith('MCQ')) this.buildMCQ(q, wrapper, q.type==='MCQ_Multi');
                 else if (q.type === 'List1') this.buildList1(q, wrapper);
             }
             container.appendChild(wrapper);
         });
-
         this.renderNav(page, container);
     }
 
-    validatePage(page) {
-        let isValid = true;
+    validate(page) {
+        let valid = true;
         page.questions.forEach(q => {
             if (q.required) {
                 const res = this.responses[q.id];
                 const block = document.getElementById(`block-${q.id}`);
-                const errorSpan = block ? block.querySelector('.error-msg') : null;
+                const hasVal = Array.isArray(res) ? res.length > 0 : (res && res !== "");
                 
-                let hasValue = false;
-                if (q.id === 'email') {
-                    hasValue = res && res.includes('@');
-                } else if (Array.isArray(res)) {
-                    hasValue = res.length > 0;
+                if (!hasVal) {
+                    valid = false;
+                    block.querySelector('.error-msg').style.display = 'inline';
+                    block.style.borderLeft = "4px solid red";
                 } else {
-                    hasValue = (res !== undefined && res !== null && res !== "");
-                }
-
-                if (!hasValue) {
-                    isValid = false;
-                    if (errorSpan) errorSpan.style.display = 'inline';
-                    if (block) block.style.borderLeft = "4px solid red";
-                } else {
-                    if (errorSpan) errorSpan.style.display = 'none';
-                    if (block) block.style.borderLeft = "none";
+                    block.querySelector('.error-msg').style.display = 'none';
+                    block.style.borderLeft = "4px solid transparent";
                 }
             }
         });
-        return isValid;
+        return valid;
     }
 
     buildDESQ(q, w) {
         const i = document.createElement('input');
-        i.type = 'email';
         i.className = 'logikos-input';
-        i.placeholder = "Enter your unique email ID";
+        i.placeholder = "Enter response...";
         i.value = this.responses[q.id] || '';
         i.oninput = (e) => this.responses[q.id] = e.target.value;
         w.appendChild(i);
     }
 
     buildMCQ(q, w, isMulti) {
+        const bundle = document.createElement('div');
+        bundle.className = 'option-bundle';
         q.options.forEach(opt => {
             const r = document.createElement('label');
             r.className = 'option-row';
@@ -104,8 +92,9 @@ class SurveyEngine {
                     e.target.checked ? this.responses[q.id].push(opt) : this.responses[q.id] = this.responses[q.id].filter(i => i !== opt);
                 }
             };
-            w.appendChild(r);
+            bundle.appendChild(r);
         });
+        w.appendChild(bundle);
     }
 
     buildList1(q, w) {
@@ -114,12 +103,7 @@ class SurveyEngine {
         const refresh = () => {
             area.innerHTML = '';
             (this.responses[q.id] || []).forEach(val => {
-                const b = document.createElement('div'); b.className = 'selected-bubble';
-                b.innerHTML = `${val} <span class="remove-btn">×</span>`;
-                b.querySelector('.remove-btn').onclick = () => {
-                    this.responses[q.id] = this.responses[q.id].filter(i => i !== val);
-                    refresh();
-                };
+                const b = document.createElement('div'); b.className = 'selected-bubble'; b.innerText = val;
                 area.appendChild(b);
             });
         };
@@ -144,48 +128,38 @@ class SurveyEngine {
             nav.appendChild(b);
         }
 
-        const n = document.createElement('button'); 
-        n.className = 'btn-box'; 
-        n.innerText = (page.isEnd || page.id.startsWith('BRANCH')) ? "SUBMIT" : "NEXT";
-        
-       n.onclick = () => {
-    if (this.validatePage(page)) {
-        if (page.isEnd || page.id.startsWith('BRANCH')) {
-            this.submitData();
-        } else {
-            this.history.push(this.currentPageId);
-            
-            // LOGIC FIX: Branching now occurs ONLY when leaving Page 3 (p3)
-            if (page.id === 'p3' && this.selectedBranch) {
-                this.currentPageId = this.selectedBranch;
-            } else {
-                this.currentPageId = page.nextPage;
+        const n = document.createElement('button');
+        n.className = 'btn-box';
+        n.innerText = (page.id.startsWith('BRANCH') || page.isEnd) ? "SUBMIT" : "NEXT";
+        n.onclick = () => {
+            if (this.validate(page)) {
+                if (page.id.startsWith('BRANCH') || page.isEnd) {
+                    this.submit();
+                } else {
+                    this.history.push(this.currentPageId);
+                    // LOGIC FIX: Force Page 3 before branching
+                    if (page.id === 'p3' && this.selectedBranch) {
+                        this.currentPageId = this.selectedBranch;
+                    } else {
+                        this.currentPageId = page.nextPage;
+                    }
+                    this.renderPage();
+                }
             }
-            
-            this.renderPage();
-        }
+        };
+        nav.appendChild(n);
+        container.appendChild(nav);
     }
-};
 
-    async submitData() {
-        const container = document.getElementById('surveyContainer');
-        container.innerHTML = "<h1>SYNCING DATA...</h1><p>Please wait while we secure your response.</p>";
-
+    async submit() {
+        document.getElementById('surveyContainer').innerHTML = "<h1>SYNCING...</h1>";
         const payload = {};
-        // Map survey responses directly to alphanumeric keys from your Spreadsheet
         for (const key in this.responses) {
             payload[key] = Array.isArray(this.responses[key]) ? this.responses[key].join(', ') : this.responses[key];
         }
-
         try {
-            await fetch(this.SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify(payload)
-            });
-            container.innerHTML = "<h1>THANK YOU</h1><p>Your insights have been recorded. <br><br> <a href='https://logikos.in' class='btn-box' style='text-decoration:none;'>RETURN HOME</a></p>";
-        } catch (error) {
-            container.innerHTML = "<h1>SYNC FAILED</h1><p>Could not connect to the database. Check your internet connection.</p>";
-        }
+            await fetch(this.SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+            document.getElementById('surveyContainer').innerHTML = "<h1>THANK YOU</h1><p>Your insights are recorded.</p>";
+        } catch (e) { alert("Sync Error. Please try again."); }
     }
 }
