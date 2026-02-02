@@ -17,7 +17,7 @@
             color: #333;
         }
 
-        /* FIXED HEADER (No buttons as requested) */
+        /* FIXED HEADER (No buttons) */
         header {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 70px;
@@ -39,14 +39,13 @@
         /* MAIN CONTENT AREA */
         main {
             flex: 1;
-            margin-top: 70px;
+            margin-top: 70px; /* Offsets fixed header */
             padding: 40px 5%;
             display: flex;
             flex-direction: column;
-            align-items: center; /* Center-aligned for Welcome Page */
+            align-items: center; 
         }
 
-        /* FOOTER (from navigation.js) */
         footer {
             background-color: #f8f9fa;
             padding: 30px 5%;
@@ -54,42 +53,40 @@
             font-size: 0.85rem;
             color: #666;
         }
+
         .footer-content { display: flex; justify-content: space-between; }
 
-        /* --- SURVEY SPECIFIC STYLES --- */
+        /* --- SURVEY SPECIFIC BUNDLING --- */
         #surveyContainer { width: 100%; max-width: 800px; text-align: center; }
 
         h1 { font-size: 2.5rem; margin-bottom: 20px; text-transform: uppercase; }
         .welcome-desc { color: #555; line-height: 1.6; margin-bottom: 30px; }
 
-        /* LOGIKOS INPUT (Half width, black border) */
+        /* LOGIKOS INPUT (Black border) */
         .logikos-input {
             width: 50%;
             padding: 12px;
             border: 2px solid #1a1a1a;
             border-radius: 4px;
             font-size: 1rem;
-            margin-top: 10px;
+            margin: 10px auto;
             outline: none;
-            box-sizing: border-box;
             display: block;
-            margin-left: auto;
-            margin-right: auto;
         }
 
-        /* BUNDLED QUESTIONS (Tight spacing within bundle, wide between bundles) */
         .question-block { margin-bottom: 45px; text-align: left; }
         .q-text { font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 5px; }
         
+        /* Tight Option Bundle */
         .option-row { 
             display: flex; 
             align-items: center; 
-            padding: 4px 0; /* Tight spacing for bundle */
+            padding: 4px 0; 
             cursor: pointer; 
         }
         .option-row input { margin-right: 12px; width: 18px; height: 18px; accent-color: #1a1a1a; }
 
-        /* FIDGET BUTTONS (from index.html) */
+        /* FIDGET BUTTONS */
         .btn-box {
             padding: 12px 35px;
             border: 2px solid #1a1a1a;
@@ -121,8 +118,11 @@
         <div class="logo-container">LOGIKOS</div>
     </header>
 
-    <main id="surveyContainer">
-        </main>
+    <main>
+        <div id="surveyContainer">
+            <h1>LOADING...</h1>
+        </div>
+    </main>
 
     <footer>
         <div class="footer-content">
@@ -131,9 +131,8 @@
         </div>
     </footer>
 
-    <script src="engine.js"></script>
     <script>
-        // REPLACE WITH YOUR APPS SCRIPT URL
+        // GOOGLE SHEETS LINK
         const SHEET_URL = 'YOUR_GOOGLE_SCRIPT_URL';
 
         class SurveyEngine {
@@ -149,6 +148,7 @@
 
             renderPage() {
                 const container = document.getElementById('surveyContainer');
+                if(!container) return;
                 container.innerHTML = '';
                 const page = this.data.pages.find(p => p.id === this.currentPageId);
 
@@ -159,7 +159,7 @@
                 page.questions.forEach(q => {
                     const wrapper = document.createElement('div');
                     wrapper.className = 'question-block';
-                    if(this.currentPageId !== 'p1') wrapper.style.textAlign = 'left';
+                    if(this.currentPageId === 'p1') wrapper.style.textAlign = 'center';
 
                     if (q.type === 'InfoBox') {
                         const p = document.createElement('p');
@@ -193,8 +193,6 @@
             }
 
             addMCQ(q, w, isMulti) {
-                const bundle = document.createElement('div');
-                bundle.className = 'option-bundle';
                 q.options.forEach(opt => {
                     const r = document.createElement('label');
                     r.className = 'option-row';
@@ -209,9 +207,8 @@
                             e.target.checked ? this.responses[q.id].push(opt) : this.responses[q.id] = this.responses[q.id].filter(i => i !== opt);
                         }
                     };
-                    bundle.appendChild(r);
+                    w.appendChild(r);
                 });
-                w.appendChild(bundle);
             }
 
             addList1(q, w) {
@@ -248,12 +245,12 @@
 
                 const n = document.createElement('button'); 
                 n.className = 'btn-box'; 
-                n.innerText = page.id.startsWith('BRANCH') ? "SUBMIT" : "NEXT";
+                n.innerText = (page.id.startsWith('BRANCH') || page.isEnd) ? "SUBMIT" : "NEXT";
                 n.onclick = () => {
                     if (page.id === 'p1' && (!this.responses['email'] || !this.responses['email'].includes('@'))) {
                         alert("Please enter a valid email."); return;
                     }
-                    if (page.id.startsWith('BRANCH') || page.id === 'THANK_YOU') {
+                    if (page.id.startsWith('BRANCH') || page.isEnd) {
                         this.submitData();
                     } else {
                         this.history.push(this.currentPageId);
@@ -273,12 +270,16 @@
                 document.getElementById('surveyContainer').innerHTML = "<h1>SYNCING...</h1>";
                 try {
                     await fetch(SHEET_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-                    document.getElementById('surveyContainer').innerHTML = "<h1>THANK YOU</h1><p>Data synced to Google Sheets.</p>";
+                    document.getElementById('surveyContainer').innerHTML = "<h1>THANK YOU</h1><p>Your insights have been recorded.</p>";
                 } catch (e) { alert("Submission failed. Check Console."); }
             }
         }
 
-        fetch('./survey.json').then(res => res.json()).then(data => { new SurveyEngine(data).init(); });
+        // Fetch local survey.json and init
+        fetch('./survey.json')
+            .then(res => res.json())
+            .then(data => { new SurveyEngine(data).init(); })
+            .catch(err => { document.getElementById('surveyContainer').innerHTML = "<h1>Error loading survey data.</h1>"; });
     </script>
 </body>
 </html>
