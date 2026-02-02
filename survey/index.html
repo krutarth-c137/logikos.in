@@ -4,57 +4,93 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logikos | Strategic Survey</title>
-    <link rel="stylesheet" href="../style.css"> 
     <style>
-        /* --- LOGIKOS SURVEY THEME OVERRIDES --- */
-        html, body {
-            height: 100%;
-            margin: 0;
-            background: #ffffff; /* Overriding f9f9f9 for clean look */
-        }
+        /* --- BRAND REPLICATION (from main.css) --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        .survey-hero-wrapper {
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: calc(100vh - 140px); /* Matches your home page calc */
-            text-align: center;
-            padding: 20px;
+            min-height: 100vh;
+            background-color: #ffffff;
+            color: #333;
         }
 
-        /* Welcome Note Center Aligned */
-        h1 { font-size: 2.5rem; letter-spacing: 2px; margin-bottom: 10px; }
-        .welcome-desc { max-width: 600px; color: #555; margin-bottom: 30px; font-size: 1.1rem; }
+        /* FIXED HEADER (No buttons as requested) */
+        header {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 70px;
+            background-color: #1a1a1a;
+            display: flex;
+            align-items: center;
+            padding: 0 5%;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
 
-        /* The "Logikos Style" Input Box (Half Width + Black Border) */
-        .survey-input {
+        .logo-container {
+            color: white;
+            font-weight: bold;
+            font-size: 1.4rem;
+            letter-spacing: 1px;
+        }
+
+        /* MAIN CONTENT AREA */
+        main {
+            flex: 1;
+            margin-top: 70px;
+            padding: 40px 5%;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center-aligned for Welcome Page */
+        }
+
+        /* FOOTER (from navigation.js) */
+        footer {
+            background-color: #f8f9fa;
+            padding: 30px 5%;
+            border-top: 1px solid #eee;
+            font-size: 0.85rem;
+            color: #666;
+        }
+        .footer-content { display: flex; justify-content: space-between; }
+
+        /* --- SURVEY SPECIFIC STYLES --- */
+        #surveyContainer { width: 100%; max-width: 800px; text-align: center; }
+
+        h1 { font-size: 2.5rem; margin-bottom: 20px; text-transform: uppercase; }
+        .welcome-desc { color: #555; line-height: 1.6; margin-bottom: 30px; }
+
+        /* LOGIKOS INPUT (Half width, black border) */
+        .logikos-input {
             width: 50%;
-            max-width: 400px;
-            padding: 15px;
-            border: 2px solid #000000; /* Distinct Black Border */
+            padding: 12px;
+            border: 2px solid #1a1a1a;
             border-radius: 4px;
-            font-size: 1.1rem;
+            font-size: 1rem;
             margin-top: 10px;
             outline: none;
             box-sizing: border-box;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
         }
 
-        /* Question Bundle Styling (Tight options, spaced questions) */
-        .question-block { margin-bottom: 40px; text-align: left; width: 100%; max-width: 600px; }
-        .q-text { font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 8px; }
+        /* BUNDLED QUESTIONS (Tight spacing within bundle, wide between bundles) */
+        .question-block { margin-bottom: 45px; text-align: left; }
+        .q-text { font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 5px; }
         
         .option-row { 
             display: flex; 
             align-items: center; 
-            margin-bottom: 8px; /* Tight bundle */
+            padding: 4px 0; /* Tight spacing for bundle */
             cursor: pointer; 
         }
-        .option-row input { margin-right: 12px; width: 18px; height: 18px; accent-color: #000; }
+        .option-row input { margin-right: 12px; width: 18px; height: 18px; accent-color: #1a1a1a; }
 
-        /* Navigation Buttons (Following your btn-box theme) */
-        .nav-btns { margin-top: 40px; display: flex; gap: 20px; }
-        .btn-logikos {
+        /* FIDGET BUTTONS (from index.html) */
+        .btn-box {
             padding: 12px 35px;
             border: 2px solid #1a1a1a;
             background: #ffffff;
@@ -63,38 +99,42 @@
             text-transform: uppercase;
             cursor: pointer;
             transition: all 0.1s ease;
+            user-select: none;
+            display: inline-block;
+            margin-top: 20px;
         }
-        .btn-logikos:hover { background: #f8f8f8; }
-        .btn-logikos:active { transform: translateY(2px); background: #eee; }
+        .btn-box:hover { background: #f8f8f8; }
+        .btn-box:active { transform: translateY(3px); background: #eeeeee; }
 
-        /* Bubble Pool (List1) */
+        .nav-btns { display: flex; gap: 20px; margin-top: 20px; justify-content: center; }
+
+        /* BUBBLE POOL (List1) */
         .selection-area { border: 2px dashed #ccc; padding: 10px; margin-bottom: 10px; min-height: 40px; border-radius: 4px; display: flex; flex-wrap: wrap; gap: 5px; }
-        .selected-bubble { background: #000; color: #fff; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; }
+        .selected-bubble { background: #1a1a1a; color: #fff; padding: 5px 12px; border-radius: 2px; font-size: 0.8rem; }
         .options-pool { display: flex; flex-wrap: wrap; gap: 8px; }
-        .bubble-option { border: 1px solid #000; padding: 5px 12px; border-radius: 20px; cursor: pointer; font-size: 0.8rem; }
-
-        /* Footer Sync */
-        footer { background: #000; color: white; padding: 20px; text-align: center; font-size: 12px; }
+        .bubble-option { border: 1px solid #1a1a1a; padding: 5px 12px; border-radius: 2px; cursor: pointer; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
-    <nav>
-        <div class="logo">LOGIKOS</div>
-        <span></span> 
-    </nav>
+    <header>
+        <div class="logo-container">LOGIKOS</div>
+    </header>
 
-    <main class="survey-hero-wrapper" id="surveyContainer">
+    <main id="surveyContainer">
         </main>
 
     <footer>
-        &copy; 2026 LOGIKOS.IN | SIMPLE IS SENSIBLE | AHMEDABAD
+        <div class="footer-content">
+            <span>© 2026 Logikos.in</span>
+            <span>Contact: alogikos@gmail.com</span>
+        </div>
     </footer>
 
     <script src="engine.js"></script>
     <script>
-        // GOOGLE SHEETS CONFIG
-        const GOOGLE_SCRIPT_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
+        // REPLACE WITH YOUR APPS SCRIPT URL
+        const SHEET_URL = 'YOUR_GOOGLE_SCRIPT_URL';
 
         class SurveyEngine {
             constructor(data) {
@@ -119,7 +159,7 @@
                 page.questions.forEach(q => {
                     const wrapper = document.createElement('div');
                     wrapper.className = 'question-block';
-                    if(this.currentPageId === 'p1') wrapper.style.textAlign = 'center';
+                    if(this.currentPageId !== 'p1') wrapper.style.textAlign = 'left';
 
                     if (q.type === 'InfoBox') {
                         const p = document.createElement('p');
@@ -132,27 +172,29 @@
                         label.innerText = q.label;
                         wrapper.appendChild(label);
                         
-                        if (q.type === 'DESQ') this.buildDESQ(q, wrapper);
-                        else if (q.type === 'MCQ_1' || q.type === 'MCQ_Logic') this.buildMCQ(q, wrapper, false);
-                        else if (q.type === 'MCQ_Multi') this.buildMCQ(q, wrapper, true);
-                        else if (q.type === 'List1') this.buildList1(q, wrapper);
+                        if (q.type === 'DESQ') this.addDESQ(q, wrapper);
+                        else if (q.type.startsWith('MCQ')) this.addMCQ(q, wrapper, q.type==='MCQ_Multi');
+                        else if (q.type === 'List1') this.addList1(q, wrapper);
                     }
                     container.appendChild(wrapper);
                 });
 
-                this.renderNav(page, container);
+                this.addNav(page, container);
             }
 
-            buildDESQ(q, w) {
+            addDESQ(q, w) {
                 const i = document.createElement('input');
                 i.type = q.inputType || 'text';
-                i.className = 'survey-input';
+                i.className = 'logikos-input';
+                i.placeholder = q.placeholder || "Enter Email";
                 i.value = this.responses[q.id] || '';
                 i.oninput = (e) => this.responses[q.id] = e.target.value;
                 w.appendChild(i);
             }
 
-            buildMCQ(q, w, isMulti) {
+            addMCQ(q, w, isMulti) {
+                const bundle = document.createElement('div');
+                bundle.className = 'option-bundle';
                 q.options.forEach(opt => {
                     const r = document.createElement('label');
                     r.className = 'option-row';
@@ -167,18 +209,19 @@
                             e.target.checked ? this.responses[q.id].push(opt) : this.responses[q.id] = this.responses[q.id].filter(i => i !== opt);
                         }
                     };
-                    w.appendChild(r);
+                    bundle.appendChild(r);
                 });
+                w.appendChild(bundle);
             }
 
-            buildList1(q, w) {
+            addList1(q, w) {
                 const area = document.createElement('div'); area.className = 'selection-area';
                 const pool = document.createElement('div'); pool.className = 'options-pool';
                 const refresh = () => {
                     area.innerHTML = '';
                     (this.responses[q.id] || []).forEach(val => {
                         const b = document.createElement('div'); b.className = 'selected-bubble';
-                        b.innerHTML = `${val}`;
+                        b.innerHTML = val;
                         area.appendChild(b);
                     });
                 };
@@ -193,25 +236,25 @@
                 w.appendChild(area); w.appendChild(pool); refresh();
             }
 
-            renderNav(page, container) {
+            addNav(page, container) {
                 const nav = document.createElement('div');
                 nav.className = 'nav-btns';
                 
                 if (this.history.length > 0) {
-                    const b = document.createElement('button'); b.className = 'btn-logikos'; b.innerText = "BACK";
+                    const b = document.createElement('button'); b.className = 'btn-box'; b.innerText = "BACK";
                     b.onclick = () => { this.currentPageId = this.history.pop(); this.renderPage(); };
                     nav.appendChild(b);
                 }
 
                 const n = document.createElement('button'); 
-                n.className = 'btn-logikos'; 
+                n.className = 'btn-box'; 
                 n.innerText = page.id.startsWith('BRANCH') ? "SUBMIT" : "NEXT";
                 n.onclick = () => {
                     if (page.id === 'p1' && (!this.responses['email'] || !this.responses['email'].includes('@'))) {
                         alert("Please enter a valid email."); return;
                     }
-                    if (page.id.startsWith('BRANCH')) {
-                        this.submitToGoogle();
+                    if (page.id.startsWith('BRANCH') || page.id === 'THANK_YOU') {
+                        this.submitData();
                     } else {
                         this.history.push(this.currentPageId);
                         this.currentPageId = (this.currentPageId === 'p3' && this.selectedBranch) ? this.selectedBranch : page.nextPage;
@@ -222,31 +265,20 @@
                 container.appendChild(nav);
             }
 
-            async submitToGoogle() {
+            async submitData() {
                 const payload = {};
                 for (const key in this.responses) {
                     payload[key] = Array.isArray(this.responses[key]) ? this.responses[key].join(', ') : this.responses[key];
                 }
-                
                 document.getElementById('surveyContainer').innerHTML = "<h1>SYNCING...</h1>";
-                
                 try {
-                    await fetch(GOOGLE_SCRIPT_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        body: JSON.stringify(payload)
-                    });
+                    await fetch(SHEET_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
                     document.getElementById('surveyContainer').innerHTML = "<h1>THANK YOU</h1><p>Data synced to Google Sheets.</p>";
-                } catch (e) {
-                    alert("Submission failed. Check console.");
-                }
+                } catch (e) { alert("Submission failed. Check Console."); }
             }
         }
 
-        // Fetch local survey.json and init
-        fetch('./survey.json').then(res => res.json()).then(data => {
-            new SurveyEngine(data).init();
-        });
+        fetch('./survey.json').then(res => res.json()).then(data => { new SurveyEngine(data).init(); });
     </script>
 </body>
 </html>
