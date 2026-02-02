@@ -1,7 +1,7 @@
 class SurveyEngine {
     constructor(data) {
         this.data = data;
-        this.state = "WELCOME"; // WELCOME, SURVEY, THANK_YOU
+        this.state = "WELCOME"; // States: WELCOME, SURVEY, THANK_YOU
         this.currPageIndex = 0;
         this.responses = {};
         this.history = [];
@@ -15,6 +15,7 @@ class SurveyEngine {
 
     render() {
         const container = document.getElementById('surveyContainer');
+        if (!container) return; // Safety check
         container.innerHTML = '';
 
         if (this.state === "WELCOME") {
@@ -32,22 +33,33 @@ class SurveyEngine {
         const page = this.data.welcome_page;
         container.innerHTML = `<h1>${page.title}</h1><p class="welcome-desc">${page.description}</p>`;
         
-        // Render the single Des_Q on welcome page
+        // 1. Create Wrapper
         const qWrapper = document.createElement('div');
         qWrapper.className = 'question-block';
         qWrapper.id = `q-${page.question.id}`;
+
+        // 2. FIXED: Create Label with Error Span (Crucial for Validation)
+        const label = document.createElement('label');
+        label.className = 'q-text';
+        label.innerHTML = `${page.question.text} <span class="error-msg" style="display:none; color:#dc3545; font-size:0.8rem; margin-left:10px;">*mandatory</span>`;
+        qWrapper.appendChild(label);
+
+        // 3. Render Input
         this.renderDesQ(page.question, qWrapper);
         container.appendChild(qWrapper);
 
+        // 4. Navigation
         const nav = document.createElement('div');
         nav.className = 'nav-btns';
         const btn = document.createElement('button');
         btn.className = 'btn-box';
         btn.innerText = "START";
+        
         btn.onclick = () => {
+            // Now this validation won't crash because .error-msg exists
             if (this.validateQuestion(page.question)) {
                 this.state = "SURVEY";
-                this.currPageIndex = 0; // Start at p_prelim
+                this.currPageIndex = 0; 
                 this.render();
             }
         };
@@ -56,6 +68,12 @@ class SurveyEngine {
     }
 
     renderSurveyPage(container) {
+        // Safety check to prevent crash if index is out of bounds
+        if (!this.data.survey_pages || !this.data.survey_pages[this.currPageIndex]) {
+            container.innerHTML = "<h1>Error: Page not found</h1>";
+            return;
+        }
+
         const page = this.data.survey_pages[this.currPageIndex];
         
         const h2 = document.createElement('h2');
@@ -70,7 +88,7 @@ class SurveyEngine {
             // Label
             const label = document.createElement('label');
             label.className = 'q-text';
-            label.innerHTML = `${q.text} <span class="error-msg">*mandatory</span>`;
+            label.innerHTML = `${q.text} <span class="error-msg" style="display:none; color:#dc3545; font-size:0.8rem; margin-left:10px;">*mandatory</span>`;
             w.appendChild(label);
 
             // Type Switch
@@ -82,7 +100,6 @@ class SurveyEngine {
             }
             else if (q.type === 'Gate') this.renderGate(q, w);
 
-            // Handle "Other" text input visibility logic dynamically in the renderers
             container.appendChild(w);
         });
 
@@ -108,7 +125,12 @@ class SurveyEngine {
         const i = document.createElement('input');
         i.className = 'logikos-input';
         i.value = this.responses[q.id] || '';
-        i.oninput = (e) => this.responses[q.id] = e.target.value;
+        i.oninput = (e) => {
+            this.responses[q.id] = e.target.value;
+            // Clear error on type
+            const err = w.querySelector('.error-msg');
+            if(err) err.style.display = 'none';
+        };
         w.appendChild(i);
     }
 
@@ -119,7 +141,11 @@ class SurveyEngine {
             const val = opt; 
             const checked = this.responses[q.id] === val;
             l.innerHTML = `<input type="radio" name="${q.id}" ${checked?'checked':''}> ${val}`;
-            l.querySelector('input').onchange = () => { this.responses[q.id] = val; };
+            l.querySelector('input').onchange = () => { 
+                this.responses[q.id] = val; 
+                const err = w.querySelector('.error-msg');
+                if(err) err.style.display = 'none';
+            };
             w.appendChild(l);
         });
     }
@@ -134,6 +160,9 @@ class SurveyEngine {
                 if (!this.responses[q.id]) this.responses[q.id] = [];
                 if (e.target.checked) this.responses[q.id].push(opt);
                 else this.responses[q.id] = this.responses[q.id].filter(x => x !== opt);
+                
+                const err = w.querySelector('.error-msg');
+                if(err) err.style.display = 'none';
             };
             w.appendChild(l);
         });
@@ -153,6 +182,11 @@ class SurveyEngine {
                 };
                 area.appendChild(b);
             });
+            // Clear error if items exist
+            if ((this.responses[q.id] || []).length > 0) {
+                 const err = w.querySelector('.error-msg');
+                 if(err) err.style.display = 'none';
+            }
         };
 
         q.options.forEach(opt => {
@@ -179,105 +213,4 @@ class SurveyEngine {
             
             l.innerHTML = `<input type="radio" name="${q.id}" ${checked?'checked':''}> ${val}`;
             l.querySelector('input').onchange = () => { 
-                this.responses[q.id] = val;
-                this.next_dest = opt.jump_to_page; // Store the destination!
-            };
-            w.appendChild(l);
-        });
-    }
-
-    // --- NAVIGATION & VALIDATION ---
-
-    renderNav(container) {
-        const nav = document.createElement('div'); nav.className = 'nav-btns';
-        
-        // Back Button
-        if (this.history.length > 0) {
-            const b = document.createElement('button'); b.className = 'btn-box'; b.innerText = "BACK";
-            b.onclick = () => { 
-                this.currPageIndex = this.history.pop(); 
-                this.render(); 
-            };
-            nav.appendChild(b);
-        }
-
-        // Next/Submit Button
-        const isEnd = this.currPageIndex >= this.data.survey_pages.length - 1 || this.data.survey_pages[this.currPageIndex].page_id.startsWith("BRANCH");
-        
-        const n = document.createElement('button');
-        n.className = 'btn-box';
-        n.innerText = isEnd ? "SUBMIT" : "NEXT";
-        
-        n.onclick = () => {
-            const page = this.data.survey_pages[this.currPageIndex];
-            if (this.validatePage(page)) {
-                if (isEnd) {
-                    this.submit();
-                } else {
-                    this.history.push(this.currPageIndex);
-                    
-                    // ROUTING LOGIC
-                    if (page.page_id === "p_prelim" && this.next_dest) {
-                        // Find index of the branch
-                        const targetIndex = this.data.survey_pages.findIndex(p => p.page_id === this.next_dest);
-                        if (targetIndex !== -1) this.currPageIndex = targetIndex;
-                        else console.error("Branch not found:", this.next_dest);
-                    } else {
-                        // Default Fallback (Linear)
-                        this.currPageIndex++;
-                    }
-                    this.render();
-                }
-            }
-        };
-        nav.appendChild(n);
-        container.appendChild(nav);
-    }
-
-    validatePage(page) {
-        let ok = true;
-        page.questions.forEach(q => {
-             if (!this.validateQuestion(q)) ok = false;
-        });
-        return ok;
-    }
-
-    validateQuestion(q) {
-        if (!q.required) return true;
-        
-        const val = this.responses[q.id];
-        const hasVal = Array.isArray(val) ? val.length > 0 : (val && val !== "");
-        
-        const block = document.getElementById(`q-${q.id}`);
-        const err = block.querySelector('.error-msg');
-        
-        if (!hasVal) {
-            err.style.display = 'inline';
-            block.style.borderLeft = "4px solid #dc3545";
-            return false;
-        } else {
-            err.style.display = 'none';
-            block.style.borderLeft = "4px solid transparent";
-            return true;
-        }
-    }
-
-    async submit() {
-        const container = document.getElementById('surveyContainer');
-        container.innerHTML = "<h1>SYNCING DATA...</h1>";
-        
-        // Flatten arrays for Google Sheets
-        const payload = {};
-        for (let k in this.responses) {
-            payload[k] = Array.isArray(this.responses[k]) ? this.responses[k].join(', ') : this.responses[k];
-        }
-
-        try {
-            await fetch(this.SHEET_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            this.state = "THANK_YOU";
-            this.render();
-        } catch (e) {
-            container.innerHTML = "<h1>ERROR</h1><p>Connection failed.</p>";
-        }
-    }
-}
+                this.responses
