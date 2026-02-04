@@ -1,8 +1,3 @@
-/**
- * ENGINE.JS (v11 - Horizontal Stepper Support)
- * - Renders new HTML structure for Custom Label Ratings
- */
-
 class SurveyEngine {
     constructor(data, containerId = 'surveyContainer') {
         this.data = data;
