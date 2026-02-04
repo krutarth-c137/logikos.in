@@ -107,6 +107,7 @@
           "type": "MCQ_Multi",
           "question_text": "What type of Activities do you engage in or would like to engage in to fulfil the above purpose?",
           "required": true,
+          "variant": "bubble",
           "options": [
             "Product Design",
             "STEM Education",
