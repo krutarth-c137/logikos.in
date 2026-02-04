@@ -3,64 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logikos Survey</title>
+    <title>Logikos Market Survey</title>
     <style>
-        /* LOGIKOS THEME - CLEAN & RESPONSIVE */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            background-color: #f8f8f8;
-            color: #1a1a1a;
+        /* 1. CORE THEME & LAYOUT */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            background-color: #f8f8f8; 
+            color: #1a1a1a; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-height: 100vh; 
+        }
+        header { 
+            width: 100%; 
+            height: 60px; 
+            background-color: #1a1a1a; 
+            color: white; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+        }
+        .brand { font-size: 1.2rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+        
+        #surveyContainer { width: 100%; max-width: 700px; margin: 40px 20px; }
+
+        /* 2. ENGINE COMPONENT STYLES (COMPACT LOGIKOS STYLE) */
+        .engine-page { background: white; padding: 40px; border: 1px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .engine-q-block { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+        .q-text { font-weight: 700; font-size: 1.05rem; color: #000; margin-bottom: 8px; display: block;}
+        
+        /* INPUT BOXES WITH BLACK BORDER */
+        .eng-input { width: 100%; padding: 8px; border: 1px solid #000; border-radius: 0; font-size: 0.95rem; }
+        
+        /* 3. HORIZONTAL STEPPER RATING (AS PER SKETCH) */
+        
+        .rating-horizontal-container {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            padding-top: 15px;
+            margin-top: 20px;
+        }
+        /* The horizontal line connecting the circles */
+        .rating-line {
+            position: absolute;
+            top: 27px; 
+            left: 30px;
+            right: 30px;
+            height: 2px;
+            background: #ccc;
+            z-index: 0;
+        }
+        .rating-step {
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
+            position: relative;
+            cursor: pointer;
+            z-index: 1;
+            flex: 1;
         }
-
-        /* COMPACT HEADER */
-        header {
-            width: 100%;
-            height: 60px;
-            background-color: #1a1a1a;
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        .rating-circle {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #555;
+            border-radius: 50%;
+            background: #fff;
+            transition: 0.2s;
+            margin-bottom: 10px;
         }
-
-        .brand {
-            font-size: 1.2rem;
-            font-weight: 800;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        /* SURVEY CONTAINER */
-        #surveyContainer {
-            width: 100%;
-            max-width: 700px; /* Optimal reading width */
-            margin: 40px 20px;
-            background: transparent;
-        }
-
-        /* Engine Override Styles for Standalone Page */
-        .engine-page {
-            background: white;
-            padding: 40px;
-            border: 1px solid #ddd;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            border-radius: 4px; /* Slight rounding for friendliness */
-        }
+        .rating-label { font-size: 0.85rem; color: #555; font-weight: 600; text-align: center; }
         
-        /* Mobile Optimizations */
-        @media (max-width: 600px) {
-            #surveyContainer { margin: 20px 10px; width: 95%; }
-            .engine-page { padding: 20px; }
+        /* Active State for selected rating */
+        .rating-step.active .rating-circle {
+            background: #000;
+            border-color: #000;
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.1);
         }
+        .rating-step.active .rating-label { color: #000; font-weight: 800; }
 
-        /* Spinner for Loading */
-        #loading { margin-top: 50px; font-weight: bold; color: #666; }
+        /* BUBBLE OPTIONS & NAVIGATION */
+        .eng-bubble-opt { display: inline-block; padding: 8px 16px; margin: 0 6px 6px 0; border: 1px solid #000; cursor: pointer; background: white; font-weight: 600; }
+        .eng-bubble-opt.active { background: #000; color: white; }
+        .btn-primary { background: #000; color: white; border: none; padding: 12px 30px; font-weight: 700; text-transform: uppercase; cursor: pointer; margin-top: 15px; }
+        .btn-secondary { background: transparent; color: #555; border: 1px solid #ccc; padding: 12px 30px; font-weight: 700; text-transform: uppercase; cursor: pointer; margin-right: 10px; }
+        
+        @media (max-width: 600px) { .engine-page { padding: 20px; } }
+        #loading { margin-top: 50px; font-weight: bold; color: #666; text-align: center; }
     </style>
 </head>
 <body>
@@ -70,33 +102,106 @@
     </header>
 
     <div id="surveyContainer">
-        <div id="loading">Loading Survey...</div>
+        <div id="loading">Loading Survey Logic...</div>
     </div>
 
     <script src="engine.js"></script>
 
     <script>
-        // 1. Fetch the JSON file
-        fetch('survey.json')
-            .then(response => {
-                if (!response.ok) throw new Error("Could not load survey.json");
-                return response.json();
-            })
-            .then(data => {
-                // 2. Initialize Engine
-                const container = document.getElementById('surveyContainer');
-                window.engine = new SurveyEngine(data, 'surveyContainer');
-                
-                // 3. OPTIONAL: Override the submit function to save data
-                // We will add the Google Sheets logic here in the next step
-                
-                window.engine.render();
-            })
-            .catch(err => {
-                document.getElementById('loading').innerHTML = 
-                    `<p style="color:red">Error: ${err.message}</p>`;
-                console.error(err);
-            });
+        // 2. EMBEDDED SURVEY DATA (Verbatim from Survey.txt)
+        const surveyData = {
+          "project_title": "Logikos Market Survey",
+          "page_welcome": {
+            "title": "Welcome to Logikos.in",
+            "description": "Logikos.in is a platform designed to simplify how creators build and how service providers grow. We are perfecting an automated cost engine that provides instant, transparent pricing for 3D printing and manufacturing services. This interactive survey will ask tailored questions based on your awareness and use of 3D printing. Estimated time : 5mins.",
+            "consent": "We DONOT collect your email at any point of the survey",
+            "next_page_btn": "Start Survey"
+          },
+          "pages_survey": [
+            {
+              "page_id": "p1",
+              "page_title": "General Information",
+              "page_desc": "Please provide some general details.",
+              "questions": [
+                { "question_id": "Q1", "type": "MCQ_1", "question_text": "How did you hear about our platform?", "required": true, "options": ["Referral", "Social Media", "Ads"], "option_qty": 3, "other_input": true },
+                { "question_id": "Q2", "type": "Gate_Q", "question_text": "Which category best describes you", "required": true, "gate_type": "JUMP", "options": ["Student/Researcher", "Professional (Designer/Engineer/Architect)", "Hobbyist/DIYer", "Startup/Business Owner", "Other"], "option_qty": 5, "actions": { "Student/Researcher": { "type": "JUMP", "target": "p2" }, "Professional (Designer/Engineer/Architect)": { "type": "JUMP", "target": "p3" }, "Hobbyist/DIYer": { "type": "JUMP", "target": "p4" }, "Startup/Business Owner": { "type": "JUMP", "target": "p5" }, "Other": { "type": "JUMP", "target": "THANK_YOU" } } },
+                { "question_id": "Q3", "type": "MCQ_1", "question_text": "Where are you located", "required": true, "options": ["Ahmedabad/Surat/Vadodara/Rajkot", "Other places in Gujarat", "Outside Gujarat", "Outside India"], "option_qty": 4 },
+                { "question_id": "Q4", "type": "MCQ_1", "question_text": "Have you used 3D printing/prototyping or machining services before?", "required": true, "options": ["Yes", "No"], "option_qty": 2 },
+                { "question_id": "Q5", "type": "MCQ_Multi", "question_text": "What purposes do you need 3D printed parts for?", "required": true, "options": ["Academic projects", "Professional projects", "Personalized gifting", "Decor", "Toys/Entertainment", "Repair work"], "option_qty": 6, "other_input": true },
+                { "question_id": "Q6", "type": "MCQ_Multi", "question_text": "What type of Activities do you engage in or would like to engage in to fulfil the above purpose?", "required": true, "options": ["Product Design", "STEM Education", "Product development", "Customized gifting", "Outsourcing 3D printing", "Inhouse 3D printing", "Bulk Gifting", "Customized gifting", "Electronic part mounting", "RC Hobby", "Drones", "Product Development", "Automation", "Testing", "Prototyping", "Enclosure design", "Tools/Fixtures", "Lighting/Lamps", "3D Model generation/modification/download", "Online downloads/purchases (Thingiverse/Printables/Grab CAD/Etsy,etc)"], "option_qty": 20 }
+              ]
+            },
+            {
+              "page_id": "p2", "page_title": "Student / Researcher", "page_desc": "Tailored questions for Students and Researchers.",
+              "questions": [
+                { "question_id": "Q7", "type": "MCQ_1", "question_text": "What are of Study/Research are you in volved in?", "required": true, "options": ["Engineering", "Design", "Arts", "Architecture", "Interior Design"], "option_qty": 5 },
+                { "question_id": "Q8", "type": "MCQ_1", "question_text": "Do you use 3D modelling tools?", "required": true, "options": ["Yes", "No"], "option_qty": 2 },
+                { "question_id": "Q9", "type": "MCQ_1", "question_text": "How often do you source parts online?", "required": true, "options": ["Never", "Rarely", "Monthly", "Frequently"], "option_qty": 4 },
+                { "question_id": "Q10", "type": "MCQ_1", "question_text": "How do you estimate cost of project?", "required": true, "options": ["Readily available price list from sellers", "Cost estimation through detailed manual calculation", "Online Cost calculators", "Consult an expert"], "option_qty": 4 },
+                { "question_id": "Q11", "type": "MCQ_1", "question_text": "Do you compare multiple suppliers before ordering?", "required": true, "options": ["Yes", "No"], "option_qty": 2 },
+                { "question_id": "Q12", "type": "MCQ_1", "question_text": "What influences decisions most?", "required": true, "options": ["Price", "Speed", "Quality", "Reliability"], "option_qty": 4, "other_input": true },
+                { "question_id": "Q13", "type": "MCQ_1", "question_text": "Would bulk discounts motivate repeat orders?", "required": true, "options": ["Yes", "No"], "option_qty": 2 },
+                { "question_id": "Q14", "type": "MCQ_1", "question_text": "Do you want to receive customer leads for design/engineering/3d-printing services?", "required": true, "options": ["Yes", "No"], "option_qty": 2 },
+                { "question_id": "Q15", "type": "MCQ_1", "question_text": "Would you be interested in personalised tutorials or design insights in the form of blogs/videos/newsletters/consultations?", "required": true, "options": ["Yes", "No"], "option_qty": 2 }
+              ]
+            },
+            {
+              "page_id": "p3", "page_title": "Professional", "page_desc": "Questions for Designers, Engineers, and Architects.",
+              "questions": [
+                { "question_id": "Q16", "type": "MCQ_1", "question_text": "What type of work are you involved in?", "required": true, "options": ["Product/Part design", "Architecture & Interior Design", "Manufacturing", "Art project"], "option_qty": 4 },
+                { "question_id": "Q17", "type": "MCQ_1", "question_text": "What stage of the business cycle are your projects usually in?", "required": true, "options": ["Concept", "Prototype", "Testing", "Production"], "option_qty": 4 },
+                { "question_id": "Q18", "type": "MCQ_1", "question_text": "Do you require tight tolerances in your parts?", "required": true, "options": ["Yes", "No"], "option_qty": 2 },
+                { "question_id": "Q19", "type": "MCQ_Multi", "question_text": "How do you develop design guidelines?", "required": true, "options": ["CAD software", "3D Models", "AI tools for image/model generation", "Drawings"], "option_qty": 4 },
+                { "question_id": "Q20", "type": "MCQ_1", "question_text": "How often do you source parts online?", "required": true, "options": ["Never", "Rarely", "Monthly", "Frequently"], "option_qty": 4 },
+                { "question_id": "Q21", "type": "MCQ_Multi", "question_text": "How do you estimate cost of project?", "required": true, "options": ["Readily available price list from sellers", "Cost estimation through detailed manual calculation", "Online Cost calculators", "Consult an expert"], "option_qty": 4 },
+                { "question_id": "Q22", "type": "MCQ_1", "question_text": "Do you compare multiple suppliers before ordering?", "required": true, "options": ["Yes", "No"], "option_qty": 2 },
+                { "question_id": "Q23", "type": "MCQ_1", "question_text": "Would you be interested in personalised tutorials or design insights in the form of blogs/videos/newsletters/consultations?", "required": true, "options": ["Yes", "No"], "option_qty": 2 }
+              ]
+            },
+            {
+              "page_id": "p4", "page_title": "Hobbyist / DIYers", "page_desc": "Tailored questions for Hobbyists.",
+              "questions": [
+                { "question_id": "Q24", "type": "MCQ_Multi", "question_text": "What type of projects do you work on", "required": true, "options": ["Prototypes", "Art", "Gadgets", "Lighting", "Mountings", "Mechanisms", "Drones", "RC vehicles"], "option_qty": 8, "other_input": true },
+                { "question_id": "Q25", "type": "MCQ_Multi", "question_text": "How do you develop concepts?", "required": true, "options": ["CAD software", "3D Models", "AI tools for image/model generation", "Drawings"], "option_qty": 4 },
+                { "question_id": "Q26", "type": "MCQ_1", "question_text": "How often do you source parts online?", "required": true, "options": ["Never", "Rarely", "Monthly", "Frequently"], "option_qty": 4 },
+                { "question_id": "Q27", "type": "MCQ_Multi", "question_text": "How do you estimate cost of project?", "required": true, "options": ["Readily available price list from sellers", "Cost estimation through detailed manual calculation", "Online Cost calculators", "Consult an expert"], "option_qty": 4 },
+                { "question_id": "Q28", "type": "MCQ_1", "question_text": "Do you compare multiple suppliers before ordering?", "required": true, "options": ["Yes", "No"], "option_qty": 2 },
+                { "question_id": "Q29", "type": "MCQ_1", "question_text": "Would you be interested in personalised tutorials or design insights in the form of blogs/videos/newsletters/consultations?", "required": true, "options": ["Yes", "No"], "option_qty": 2 }
+              ]
+            },
+            {
+              "page_id": "p5", "page_title": "Start-up / Business Owner", "page_desc": "Tailored questions for Business Owners.",
+              "questions": [
+                { "question_id": "Q30", "type": "MCQ_1", "question_text": "Are you developing a new product?", "required": true, "options": ["Yes", "No"], "option_qty": 2 },
+                { "question_id": "Q31", "type": "MCQ_Multi", "question_text": "How do you develop concepts?", "required": true, "options": ["CAD software", "3D Models", "AI tools for image/model generation", "Drawings"], "option_qty": 4 },
+                { "question_id": "Q32", "type": "MCQ_1", "question_text": "How often do you source parts online?", "required": true, "options": ["Never", "Rarely", "Monthly", "Frequently"], "option_qty": 4 },
+                { "question_id": "Q33", "type": "MCQ_Multi", "question_text": "How do you estimate cost of project?", "required": true, "options": ["Readily available price list from sellers", "Cost estimation through detailed manual calculation", "Online Cost calculators", "Consult an expert"], "option_qty": 4 },
+                { "question_id": "Q34", "type": "MCQ_1", "question_text": "Do you compare multiple suppliers before ordering?", "required": true, "options": ["Yes", "No"], "option_qty": 2 },
+                { "question_id": "Q35", "type": "MCQ_1", "question_text": "What influences decisions most?", "required": true, "options": ["Price", "Speed", "Quality", "Reliability"], "option_qty": 4, "other_input": true },
+                { "question_id": "Q36", "type": "MCQ_1", "question_text": "Would bulk discounts motivate repeat orders?", "required": true, "options": ["Yes", "No"], "option_qty": 2 },
+                { "question_id": "Q37", "type": "MCQ_1", "question_text": "Do you want to receive customer leads for design/engineering/3d-printing services?", "required": true, "options": ["Yes", "No"], "option_qty": 2 },
+                { "question_id": "Q38", "type": "MCQ_1", "question_text": "Would you be interested in personalised tutorials or design insights in the form of blogs/videos/newsletters/consultations?", "required": true, "options": ["Yes", "No"], "option_qty": 2 }
+              ]
+            }
+          ],
+          "page_thankyou": {
+            "title": "Thank You",
+            "end_note": "Thank you for completing the survey. Your feedback is valuable to Logikos.in.",
+            "redirect_url": ""
+          }
+        };
+
+        // 3. Initialize Engine
+        try {
+            if (typeof SurveyEngine === 'undefined') {
+                throw new Error("engine.js not loaded. Ensure engine.js is in the same folder as this file.");
+            }
+            window.engine = new SurveyEngine(surveyData, 'surveyContainer');
+            window.engine.render();
+        } catch (err) {
+            document.getElementById('loading').innerHTML = `<p style="color:red; text-align:center;">Error: ${err.message}</p>`;
+            console.error(err);
+        }
     </script>
 
 </body>
