@@ -1,38 +1,680 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logikos | Survey Creator</title>
-    <link rel="stylesheet" href="creator.css">
+    <style>
+        /* =========================================
+           1. LOGIKOS CORE THEME
+           ========================================= */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #f4f4f4;
+            color: #1a1a1a;
+            overflow: hidden;
+        }
+
+        /* HEADER */
+        header {
+            height: 60px;
+            background-color: #1a1a1a;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            flex-shrink: 0;
+        }
+
+        .brand {
+            font-size: 1.3rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* BUTTONS (Global) */
+        .btn-box {
+            padding: 6px 15px;
+            border: 2px solid #1a1a1a;
+            background: #ffffff;
+            color: #1a1a1a;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            user-select: none;
+        }
+
+        .btn-box.inverted {
+            border: 2px solid #ffffff;
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .btn-box.inverted:hover {
+            background: #333;
+        }
+
+        .btn-box:hover {
+            background: #f2f2f2;
+        }
+
+        .btn-box:active {
+            transform: translateY(2px);
+        }
+
+        /* =========================================
+           2. APP LAYOUT
+           ========================================= */
+        .app-container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 60px);
+            overflow: hidden;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 260px;
+            background-color: #f8f8f8;
+            border-right: 1px solid #ccc;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            margin-top: 0;
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+
+        .page-card {
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.2s;
+            position: relative;
+            font-size: 0.9rem;
+        }
+
+        .page-card:hover {
+            border-color: #1a1a1a;
+        }
+
+        .page-card.active {
+            border: 2px solid #1a1a1a;
+            background: #fff;
+            font-weight: 700;
+        }
+
+        .page-card.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #1a1a1a;
+        }
+
+        .btn-del-page {
+            font-size: 1.2rem;
+            line-height: 0.5;
+            color: #999;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .btn-del-page:hover {
+            color: #d9534f;
+        }
+
+        .add-page-btn {
+            text-align: center;
+            padding: 10px;
+            border: 2px dashed #bbb;
+            color: #666;
+            cursor: pointer;
+            margin-top: 5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+
+        .add-page-btn:hover {
+            border-color: #1a1a1a;
+            color: #1a1a1a;
+            background: #fff;
+        }
+
+        /* EDITOR AREA */
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            background-color: #ffffff;
+        }
+
+        .editor-section {
+            max-width: 850px;
+            margin: 0 auto;
+            padding-bottom: 100px;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 1.4rem;
+            color: #1a1a1a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* =========================================
+           3. INPUTS (COMPACT & DARKER)
+           ========================================= */
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        .lbl {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #444;
+        }
+
+        .input-text {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #333;
+            border-radius: 0;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: 0.2s;
+            background: #fff;
+            height: auto;
+        }
+
+        .input-text:focus {
+            outline: none;
+            border-color: #000;
+            border-width: 1px;
+            background: #fafafa;
+        }
+
+        textarea.input-text {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        /* TOGGLE SWITCH */
+        .toggle-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 22px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .2s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .2s;
+        }
+
+        input:checked+.slider {
+            background-color: #1a1a1a;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(18px);
+        }
+
+        /* Tiny Toggle for Options */
+        .switch-sm {
+            width: 34px;
+            height: 18px;
+        }
+
+        .switch-sm .slider:before {
+            height: 12px;
+            width: 12px;
+            left: 3px;
+            bottom: 3px;
+        }
+
+        .switch-sm input:checked+.slider:before {
+            transform: translateX(16px);
+        }
+
+        .toggle-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #555;
+            margin-right: 8px;
+        }
+
+        /* =========================================
+           4. QUESTIONS & ACTION AREA
+           ========================================= */
+        .q-list {
+            margin-top: 25px;
+        }
+
+        .q-card {
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 15px;
+            position: relative;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .q-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .badge {
+            background: #000;
+            color: white;
+            padding: 6px 12px;
+            font-size: 0.9rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            line-height: 1.2;
+            display: inline-block;
+        }
+
+        .btn-small {
+            background: transparent;
+            border: 1px solid #999;
+            padding: 4px 10px;
+            cursor: pointer;
+            font-weight: 700;
+            color: #555;
+            font-size: 0.8rem;
+        }
+
+        .btn-small:hover {
+            border-color: #000;
+            color: #000;
+        }
+
+        .btn-del-q {
+            background: #d9534f;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-left: 5px;
+            line-height: 1.2;
+            display: inline-block;
+        }
+
+        .btn-del-q:hover {
+            background: #c9302c;
+        }
+
+        /* ADD AREA STYLES */
+        .add-q-area {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f1f1f1;
+            border: 1px solid #ccc;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: stretch;
+        }
+
+        optgroup {
+            font-weight: bold;
+            color: #000;
+            background: #ddd;
+        }
+
+        option {
+            padding: 5px;
+            color: #333;
+            background: #fff;
+        }
+
+        .type-select {
+            padding: 0 12px;
+            border: 2px solid #333;
+            font-size: 0.9rem;
+            border-radius: 0;
+            height: 40px;
+            background: white;
+            flex: 1;
+            max-width: 250px;
+            font-weight: 600;
+        }
+
+        .btn-action,
+        .btn-secondary {
+            background: #1a1a1a;
+            color: white;
+            border: 2px solid #1a1a1a;
+            padding: 0 20px;
+            height: 40px;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: 0.1s;
+        }
+
+        .btn-action:hover,
+        .btn-secondary:hover {
+            background: #333;
+            border-color: #333;
+        }
+
+        .btn-action:active {
+            transform: translateY(1px);
+        }
+
+        /* =========================================
+           5. ENGINE PREVIEW & RATING STYLES
+           ========================================= */
+        #enginePreviewContainer {
+            border: 2px solid #eee;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        .engine-page {
+            max-width: 100%;
+            background: white;
+            padding: 30px;
+        }
+
+        .engine-page h1,
+        .engine-page h2 {
+            margin-top: 0;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .desc {
+            color: #555;
+            font-style: italic;
+            margin-bottom: 25px;
+        }
+
+        .engine-q-block {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .q-text {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: #000;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .eng-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #999;
+            border-radius: 0;
+            font-size: 0.95rem;
+            margin-top: 5px;
+        }
+
+        .eng-input:focus {
+            border-color: #000;
+            outline: none;
+        }
+
+        .eng-opt-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: 0.1s;
+        }
+
+        .eng-opt-row:hover {
+            background: #f5f5f5;
+            border-color: #ddd;
+        }
+
+        .eng-opt-row input {
+            accent-color: #000;
+            transform: scale(1.1);
+        }
+
+        .eng-bubble-opt {
+            display: inline-block;
+            padding: 8px 16px;
+            margin: 0 6px 6px 0;
+            border: 1px solid #999;
+            cursor: pointer;
+            color: #333;
+            background: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .eng-bubble-opt:hover {
+            border-color: #000;
+            color: #000;
+        }
+
+        .eng-bubble-opt.active {
+            background: #000;
+            color: white;
+            border-color: #000;
+        }
+
+        /* STANDARD RATING (BOXES) */
+        .eng-rating-box {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #ccc;
+            font-weight: bold;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .eng-rating-box:hover {
+            border-color: #000;
+            color: #000;
+        }
+
+        /* HORIZONTAL STEPPER RATING (NEW) */
+        .rating-horizontal-container {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            padding-top: 15px;
+            margin-top: 20px;
+        }
+
+        /* The horizontal line */
+        .rating-line {
+            position: absolute;
+            top: 27px;
+            /* Aligned with center of circle */
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background: #ccc;
+            z-index: 0;
+        }
+
+        .rating-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            cursor: pointer;
+            z-index: 1;
+            /* Above line */
+            flex: 1;
+        }
+
+        .rating-circle {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #555;
+            border-radius: 50%;
+            background: #fff;
+            transition: 0.2s;
+            margin-bottom: 10px;
+        }
+
+        .rating-label {
+            font-size: 0.85rem;
+            color: #555;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        /* Active State */
+        .rating-step:hover .rating-circle {
+            border-color: #000;
+            transform: scale(1.1);
+        }
+
+        .rating-step.active .rating-circle {
+            background: #000;
+            border-color: #000;
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .rating-step.active .rating-label {
+            color: #000;
+            font-weight: 800;
+        }
+
+        .btn-start,
+        .btn-primary {
+            background: #000;
+            color: white;
+            border: 2px solid #000;
+            padding: 12px 30px;
+            font-size: 1rem;
+            margin-top: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        .btn-start:hover,
+        .btn-primary:hover {
+            background: #333;
+        }
+    </style>
 </head>
+
 <body>
-    <header id="admin-header">
-        <div class="logo">LOGIKOS CREATOR</div>
-        <div class="header-controls">
-            <div class="mode-switch">
-                <label>CREATOR</label>
-                <input type="checkbox" id="previewToggle">
-                <label>PREVIEW</label>
-            </div>
-            <button class="btn-action" onclick="app.handleUpload()">UPLOAD JSON</button>
-            <button class="btn-action" onclick="app.downloadJSON()">DOWNLOAD JSON</button>
+    <header>
+        <div class="brand">LOGIKOS</div>
+        <div class="header-actions">
             <input type="file" id="fileInput" hidden>
+            <button class="btn-box inverted" onclick="app.handleUpload()">Upload JSON</button>
+            <button class="btn-box inverted" onclick="app.downloadJSON()">Download JSON</button>
         </div>
     </header>
 
-    <div class="admin-layout">
-        <aside id="sidebar">
-            <div class="page-list" id="pageList">
-                </div>
-            <button class="btn-add-page" onclick="app.addPage()">+ ADD PAGE</button>
-        </aside>
-
-        <main id="editorCanvas">
-            <div class="empty-state">Select a page to edit</div>
-        </main>
+    <div class="app-container">
+        <div class="sidebar">
+            <h3>Survey Structure</h3>
+            <div id="pageList"></div>
+        </div>
+        <div class="main-content">
+            <div id="editorCanvas"></div>
+        </div>
     </div>
-
+    <script src="engine.js"></script>
     <script src="creator.js"></script>
 </body>
+
 </html>
