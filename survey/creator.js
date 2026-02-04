@@ -1,10 +1,3 @@
-/**
- * CREATOR.JS (v20 - Batch ID Fix & Sequential Pages)
- * - Fixed: 'copyQuestionToPage' now generates unique IDs for the whole family batch at once.
- * - Fixed: Pages now use sequential IDs (p1, p2, p3) instead of random strings.
- * - Persisted: Horizontal Stepper, Bubble Logic, Event Delegation.
- */
-
 class CreatorApp {
     constructor() {
         this.surveyData = {
