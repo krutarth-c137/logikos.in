@@ -3,7 +3,7 @@
   "page_welcome": {
     "title": "Welcome to Logikos.in",
     "description": "Logikos.in is a platform designed to simplify how creators build and how service providers grow. We are perfecting an automated cost engine that provides instant, transparent pricing for 3D printing and manufacturing services. This interactive survey will ask tailored questions based on your awareness and use of 3D printing. Estimated time : 5mins.",
-    "consent": "We DONOT collect your email at any point of the survey",
+    "consent": "We DONOT collect your e-mail at any point of the survey",
     "next_page_btn": "Start Survey"
   },
   "pages_survey": [
