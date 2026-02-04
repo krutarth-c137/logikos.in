@@ -311,30 +311,26 @@
     <script src="engine.js"></script>
 
     <script>
-        // Use Fetch API to get the JSON file relative to this HTML file
         fetch('survey.json')
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error("HTTP error " + response.status);
                 }
                 return response.json();
             })
             .then(data => {
-                // Initialize Engine with fetched data
-                // The 'surveyContainer' ID matches the div above
+                // CRITICAL FIX: 
+                // We MUST name this 'window.engine' because engine.js 
+                // has hardcoded 'onclick="engine.toggleMulti(...)"' inside it.
                 window.engine = new SurveyEngine(data, 'surveyContainer');
                 
-                // Render the initial state (Default is WELCOME page)
+                // Render the survey
                 window.engine.render();
             })
-            .catch(error => {
-                console.error('Error loading survey:', error);
-                document.getElementById('surveyContainer').innerHTML = `
-                    <div style="padding:40px; text-align:center;">
-                        <h2 style="color:#d9534f">Error Loading Survey</h2>
-                        <p>Could not load <b>survey.json</b>.</p>
-                        <p style="font-size:0.8rem; color:#666;">${error.message}</p>
-                    </div>`;
+            .catch(err => {
+                console.error("Could not load survey data:", err);
+                document.getElementById('surveyContainer').innerHTML = 
+                    `<div style="padding:40px; color:red;">Error: ${err.message}</div>`;
             });
     </script>
 </body>
