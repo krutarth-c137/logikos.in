@@ -1,21 +1,29 @@
 /* LOGIKOS CALCULATOR ENGINE 
-    Handles: 3D Rendering (Three.js), Physics Logic, Cost Estimation, and State Management.
+   Handles: 3D Rendering (Three.js), Gatekeeper Logic, Cloud Slicing, and Cost Estimation.
 */
 
 // --- CONFIGURATION ---
 const CONFIG = {
     MAX_FILES: 5,
-    MAX_SIZE_MB: 1,
-    API_ENDPOINT: "https://your-project.cloudfunctions.net/api", // Placeholder
+    MAX_SIZE_MB: 5, // Increased to 5MB as discussed
     DENSITIES: { // g/cm3
         "PLA": 1.24, "ABS": 1.04, "PETG": 1.27, "Nylon": 1.15,
         "TPU": 1.21, "Resin": 1.20, "PC": 1.20, "CF": 1.25
     },
-    RATES: { // INR per gram (Hardcoded for now - Option C)
+    RATES: { // INR per gram
         "PLA": 8.0, "ABS": 9.0, "PETG": 8.5, "Nylon": 15.0,
         "TPU": 12.0, "Resin": 18.0, "PC": 16.0, "CF": 20.0,
         "base_fee": 150 // Setup fee per order
     }
+};
+
+// --- CLOUD ENDPOINTS (PASTE YOUR URLs HERE) ---
+const CLOUD_CONFIG = {
+    // 1. The Google Sheet Web App URL (Gatekeeper)
+    GATEKEEPER_URL: 'YOUR_GOOGLE_SCRIPT_URL_HERE', 
+    
+    // 2. The Python Cloud Function URL (Slicer)
+    SLICER_URL: 'https://asia-south1-logikos-website-d56b0.cloudfunctions.net/slicer_api'
 };
 
 class CalculatorEngine {
@@ -29,7 +37,7 @@ class CalculatorEngine {
         this.initThreeJS();
     }
 
-    // --- 3D VIEWER SETUP ---
+    // --- 3D VIEWER SETUP (Unchanged) ---
     initThreeJS() {
         this.container = document.getElementById('viewer-container');
         const width = this.container.clientWidth;
@@ -80,7 +88,6 @@ class CalculatorEngine {
     }
 
     // --- FILE HANDLING ---
-    // --- FILE HANDLING ---
     handleFiles(fileList) {
         if (this.files.length + fileList.length > CONFIG.MAX_FILES) {
             alert(`Max ${CONFIG.MAX_FILES} files allowed.`);
@@ -96,17 +103,18 @@ class CalculatorEngine {
             const reader = new FileReader();
             reader.onload = (e) => {
                 this.files.push({
+                    fileObject: file, // Keep raw file for upload
                     name: file.name,
                     data: e.target.result,
                     status: 'Pending',
-                    volume: 0
+                    volume: 0, // Will be filled by ThreeJS initially, then Python
+                    isPrecise: false // Track if volume is from Python
                 });
 
                 // If first file, render it immediately
                 if (this.files.length === 1) this.viewFile(0);
                 this.updateQueueUI();
 
-                // NEW: Change Button Text
                 document.getElementById('upload-btn-text').innerText = "➕ Add Another File";
             };
             reader.readAsArrayBuffer(file);
@@ -116,8 +124,6 @@ class CalculatorEngine {
     handleLink() {
         const url = document.getElementById('link-input').value;
         if (!url) return;
-        // Mocking link fetch for now (since backend logic handles this)
-        // In real deployment, this sends URL to Python API, which returns file list.
         alert("Link processing requires live Backend. Please upload STLs for now.");
     }
 
@@ -142,7 +148,6 @@ class CalculatorEngine {
         geometry.center();
 
         // Calculate Volume (Client-side fallback)
-        // Note: trimesh in python is more accurate, but ThreeJS works for estimation
         if (file.volume === 0) {
             file.volume = this.getVolume(geometry); // cm3
         }
@@ -202,7 +207,7 @@ class CalculatorEngine {
 
     rotateModel(axis) {
         if (!this.currentMesh) return;
-        this.currentMesh.rotation[axis] += Math.PI / 2; // 90 deg
+        this.currentMesh.rotation[axis] += Math.PI / 2;
     }
 
     resetView() {
@@ -236,11 +241,12 @@ class CalculatorEngine {
         this.files.forEach((f, i) => {
             const isActive = i === this.currentFileIndex ? 'active-view' : '';
             let details = "";
+            let statusIcon = f.isPrecise ? "✅" : "⚠️"; // Checkmark if Python data used
 
             if (this.hasCalculated) {
                 details = `
                     <div class="queue-meta">
-                        <span><strong>Vol:</strong> ${f.volume.toFixed(1)} cm³</span>
+                        <span><strong>Vol:</strong> ${f.volume.toFixed(1)} cm³ ${statusIcon}</span>
                         <span><strong>Wt:</strong> ${f.weight}g</span>
                         <span style="color:#1a1a1a; font-weight:bold;">₹${f.cost}</span>
                     </div>
@@ -267,18 +273,18 @@ class CalculatorEngine {
         }
     }
 
-    // --- CALCULATION LOGIC ---
+    // --- GATEKEEPER & CLOUD LOGIC ---
+
     triggerAction() {
         if (this.files.length === 0) return alert("Please upload files first.");
 
         if (this.hasCalculated) {
-            // Already calculated -> Proceed to Order (or Reset)
             alert("Proceeding to checkout with total: " + document.getElementById('grand-total').innerText);
-            // Here you would redirect or show success-view
         } else {
-            // Check User Data
-            if (sessionStorage.getItem('userEmail')) {
-                this.performCalculation();
+            // Check Identity
+            const savedEmail = sessionStorage.getItem('userEmail');
+            if (savedEmail) {
+                this.startQuoteProcess(savedEmail);
             } else {
                 document.getElementById('modal').style.display = 'block';
             }
@@ -297,11 +303,97 @@ class CalculatorEngine {
         sessionStorage.setItem('userPhone', phone);
 
         document.getElementById('modal').style.display = 'none';
-        this.performCalculation();
+        
+        // Start the Gatekeeper Process
+        this.startQuoteProcess(email);
     }
 
-    performCalculation() {
-        // Here we simulate the Python API call locally for now
+    async startQuoteProcess(email) {
+        const statusMsg = document.getElementById('status-msg'); // Ensure you add this <p> in HTML
+        if(statusMsg) {
+            statusMsg.innerText = "⏳ Verifying Quota...";
+            statusMsg.style.color = "blue";
+        }
+
+        try {
+            // 1. Call Google Sheets Gatekeeper
+            const response = await fetch(CLOUD_CONFIG.GATEKEEPER_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "check_quota", email: email })
+            });
+            const data = await response.json();
+
+            if (data.status === "allowed") {
+                if(statusMsg) {
+                    statusMsg.innerText = "✅ Authorized! Uploading to Slicer...";
+                    statusMsg.style.color = "green";
+                }
+                
+                // 2. Proceed to Python Upload
+                this.uploadFilesToSlicer(email);
+
+                // 3. Increment Usage in Sheet (Fire and Forget)
+                fetch(CLOUD_CONFIG.GATEKEEPER_URL, {
+                    method: "POST",
+                    body: JSON.stringify({ action: "increment_usage", email: email })
+                });
+
+            } else {
+                alert(`❌ ${data.message}`);
+                if(statusMsg) statusMsg.innerText = "❌ Limit Reached";
+            }
+        } catch (error) {
+            console.error("Gatekeeper Error:", error);
+            alert("Connection failed. Using Offline Estimation mode.");
+            // Fallback: Calculate using local ThreeJS data if server fails
+            this.performLocalCalculation(); 
+        }
+    }
+
+    async uploadFilesToSlicer(email) {
+        const formData = new FormData();
+        
+        // Append raw file objects
+        this.files.forEach(f => {
+            formData.append('files', f.fileObject);
+        });
+        formData.append('email', email);
+
+        try {
+            const response = await fetch(CLOUD_CONFIG.SLICER_URL, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) throw new Error("Analysis Failed");
+
+            const data = await response.json();
+            console.log("Slicer Data:", data);
+
+            // UPDATE VOLUMES WITH PRECISE DATA
+            data.files.forEach(serverFile => {
+                // Find matching local file
+                const localFile = this.files.find(f => f.name === serverFile.filename);
+                if (localFile) {
+                    localFile.volume = serverFile.metrics.volume_cm3; // Overwrite with precise data
+                    localFile.isPrecise = true;
+                }
+            });
+
+            // Trigger Calculation with new data
+            this.performLocalCalculation(); 
+            
+            const statusMsg = document.getElementById('status-msg');
+            if(statusMsg) statusMsg.innerText = "✅ Analysis Complete!";
+
+        } catch (error) {
+            console.error("Upload Error:", error);
+            alert("Cloud Slicer failed. Using local estimation.");
+            this.performLocalCalculation();
+        }
+    }
+
+    performLocalCalculation() {
         this.hasCalculated = true;
         this.reCalculateCosts();
         document.getElementById('action-btn').innerText = "CHECKOUT";
@@ -311,12 +403,11 @@ class CalculatorEngine {
         const density = CONFIG.DENSITIES[this.selectedMaterial] || 1.24;
         const rate = CONFIG.RATES[this.selectedMaterial] || 8.0;
 
-        // Infill Factor: 100% infill = 1.0 multiplier, 20% != 0.2 (shells count), approximate:
-        // formula: base_vol * (0.3 + (infill/100 * 0.7)) -> Simple approximation
+        // Infill Factor logic
         const infillFactor = 0.3 + (this.selectedInfill / 100 * 0.7);
 
         this.files.forEach(f => {
-            // Volume was calculated on load
+            // Volume is now either ThreeJS (estimate) or Python (precise)
             const finalVol = f.volume * infillFactor;
             f.weight = (finalVol * density).toFixed(1);
             f.cost = (f.weight * rate).toFixed(2);
@@ -326,5 +417,5 @@ class CalculatorEngine {
     }
 }
 
-// Initialize Engine globally so HTML can access it
+// Initialize Engine globally
 const engine = new CalculatorEngine();
