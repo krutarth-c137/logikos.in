@@ -1,44 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cost Estimator | Logikos</title>
+
     <link rel="stylesheet" href="../css/main.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
     <style>
         /* No-Scroll Layout */
-        body, html { height: 100%; overflow: hidden; }
-        
+        body,
+        html {
+            height: 100%;
+            overflow: hidden;
+        }
+
         .calc-wrapper {
             display: grid;
-            grid-template-columns: 1.2fr 1fr;
+            grid-template-columns: 1.4fr 1fr;
             gap: 20px;
-            height: calc(100vh - 100px); /* Account for header/footer */
+            height: calc(100vh - 100px);
             margin-top: 80px;
             padding: 0 40px;
         }
 
-        /* Left Side: Materials & Viewer */
-        .left-panel { display: flex; flex-direction: column; gap: 10px; }
-        
+        /* LEFT PANEL */
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            height: 100%;
+        }
+
         .material-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 8px;
+            flex-shrink: 0;
         }
 
         .viewer-box {
             flex-grow: 1;
             background: #f0f0f0;
             border: 1px solid #ddd;
+            position: relative;
+            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            text-align: center;
-            min-height: 300px;
         }
 
-        /* Right Side: Inputs & Results */
+        /* Viewer Overlays */
+        .viewer-controls {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .viewer-btn {
+            background: rgba(26, 26, 26, 0.8);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            border-radius: 4px;
+        }
+
+        .viewer-btn:hover {
+            background: #1a1a1a;
+        }
+
+        .file-counter {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            border: 1px solid #ccc;
+            z-index: 10;
+        }
+
+        .viewer-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid #ccc;
+            padding: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 10;
+            user-select: none;
+        }
+
+        .nav-prev {
+            left: 10px;
+        }
+
+        .nav-next {
+            right: 10px;
+        }
+
+        /* RIGHT PANEL */
         .right-panel {
             display: flex;
             flex-direction: column;
@@ -46,9 +120,116 @@
             padding: 20px;
             background: #fff;
             border-left: 1px solid #eee;
+            height: 100%;
         }
 
-        /* Button Styling */
+        /* Tabs */
+        .input-tabs {
+            display: flex;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 10px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            color: #aaa;
+        }
+
+        .tab-btn.active {
+            color: #1a1a1a;
+            border-bottom: 2px solid #1a1a1a;
+        }
+
+        .input-area {
+            display: none;
+        }
+
+        .input-area.active {
+            display: block;
+        }
+
+        /* NEW: Custom File Upload Button Styling */
+        .file-upload-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        /* Hide the actual input but keep it clickable */
+        .file-upload-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* The visible button */
+        .btn-upload-style {
+            background: white;
+            border: 2px dashed #1a1a1a;
+            color: #1a1a1a;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-upload-style:hover {
+            background: #f9f9f9;
+            border-color: #007bff;
+            color: #007bff;
+        }
+
+        /* Queue & Results */
+        #file-queue {
+            flex-grow: 1;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            padding: 10px;
+            background: #f9f9f9;
+            margin-bottom: 10px;
+        }
+
+        .queue-item {
+            background: white;
+            padding: 10px;
+            margin-bottom: 8px;
+            border: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .queue-item:hover {
+            background: #f0f8ff;
+        }
+
+        .queue-item.active-view {
+            border-left: 4px solid #1a1a1a;
+            background: #fff;
+        }
+
+        .queue-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Standard Buttons */
         .btn-select {
             padding: 10px 5px;
             border: 1px solid #1a1a1a;
@@ -60,24 +241,32 @@
             transition: 0.2s;
         }
 
-        .btn-select span { display: block; font-size: 0.75rem; color: #666; }
-        
-        /* Selection State */
-        .btn-select.active { background: #1a1a1a; color: #fff; }
-        .btn-select.active span { color: #ccc; }
+        .btn-select.active {
+            background: #1a1a1a;
+            color: #fff;
+        }
 
-        /* Joke Materials: Non-Clickable */
-        .btn-joke { border: 1px dashed #ff4444; color: #ff4444; cursor: not-allowed; }
+        .btn-select span {
+            display: block;
+            font-size: 0.75rem;
+            color: #666;
+        }
 
-        .infill-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .btn-select.active span {
+            color: #ccc;
+        }
 
-        /* Result Display Area */
-        #result-display {
-            background: #f9f9f9;
-            padding: 15px;
-            border: 1px solid #1a1a1a;
-            margin: 10px 0;
-            display: none; /* Hidden until Calculate */
+        .btn-joke {
+            border: 1px dashed #ff4444;
+            color: #ff4444;
+            cursor: not-allowed;
+        }
+
+        .infill-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 10px;
         }
 
         .main-action-btn {
@@ -89,29 +278,32 @@
             cursor: pointer;
             width: 100%;
             font-size: 1.1rem;
-            margin-top: auto;
+            flex-shrink: 0;
         }
 
-        /* Modal & Checkout Screen */
-        #modal, #checkout-screen {
+        /* Modal */
+        #modal {
             display: none;
             position: fixed;
             z-index: 2000;
-            left: 0; top: 0; width: 100%; height: 100%;
-            background: white; /* Full screen takeover for checkout */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
         }
 
-        #modal { background: rgba(0,0,0,0.8); }
-        .modal-box { background: #fff; margin: 10% auto; padding: 30px; width: 400px; }
-
-        .checkout-message {
-            text-align: center;
-            padding: 10% 20px;
-            max-width: 600px;
-            margin: auto;
+        .modal-box {
+            background: #fff;
+            margin: 10% auto;
+            padding: 30px;
+            width: 400px;
+            position: relative;
+            border: 3px solid #1a1a1a;
         }
     </style>
 </head>
+
 <body>
 
     <header id="global-header"></header>
@@ -120,180 +312,116 @@
         <div class="left-panel">
             <h3>Select Material</h3>
             <div class="material-grid">
-                <button class="btn-select mat-opt" onclick="selectMat(this)">PLA</button>
-                <button class="btn-select mat-opt" onclick="selectMat(this)">ABS</button>
-                <button class="btn-select mat-opt" onclick="selectMat(this)">PETG</button>
-                <button class="btn-select mat-opt" onclick="selectMat(this)">Nylon</button>
-                <button class="btn-select mat-opt" onclick="selectMat(this)">TPU</button>
-                <button class="btn-select mat-opt" onclick="selectMat(this)">Resin</button>
-                <button class="btn-select mat-opt" onclick="selectMat(this)">Polycarbonate</button>
-                <button class="btn-select mat-opt" onclick="selectMat(this)">Carbon Fiber</button>
+                <button class="btn-select mat-opt active" data-mat="PLA"
+                    onclick="engine.setMaterial('PLA', this)">PLA</button>
+                <button class="btn-select mat-opt" data-mat="ABS" onclick="engine.setMaterial('ABS', this)">ABS</button>
+                <button class="btn-select mat-opt" data-mat="PETG"
+                    onclick="engine.setMaterial('PETG', this)">PETG</button>
+                <button class="btn-select mat-opt" data-mat="Nylon"
+                    onclick="engine.setMaterial('Nylon', this)">Nylon</button>
+                <button class="btn-select mat-opt" data-mat="TPU" onclick="engine.setMaterial('TPU', this)">TPU</button>
+                <button class="btn-select mat-opt" data-mat="Resin"
+                    onclick="engine.setMaterial('Resin', this)">Resin</button>
+                <button class="btn-select mat-opt" data-mat="PC" onclick="engine.setMaterial('PC', this)">PC</button>
+                <button class="btn-select mat-opt" data-mat="CF" onclick="engine.setMaterial('CF', this)">CF</button>
                 <button class="btn-select btn-joke">Unobtanium</button>
                 <button class="btn-select btn-joke">Vibranium</button>
             </div>
-            <div class="viewer-box" id="viewer">
-                <div id="v-status">
-                    <p>Upload an STL to view model</p>
+
+            <div class="viewer-box" id="viewer-container">
+                <div class="file-counter" id="view-counter">0 / 0</div>
+                <button class="viewer-nav nav-prev" onclick="engine.prevFile()">&lt;</button>
+                <button class="viewer-nav nav-next" onclick="engine.nextFile()">&gt;</button>
+
+                <div class="viewer-controls">
+                    <button class="viewer-btn" onclick="engine.rotateModel('x')">Rot X</button>
+                    <button class="viewer-btn" onclick="engine.rotateModel('y')">Rot Y</button>
+                    <button class="viewer-btn" onclick="engine.rotateModel('z')">Rot Z</button>
+                    <button class="viewer-btn" onclick="engine.resetView()">Reset</button>
                 </div>
             </div>
         </div>
 
         <div class="right-panel">
-            <div>
-                <label>Upload STL</label>
-                <input type="file" id="file-input" onchange="handleUpload(this)" style="margin-top:10px;">
+            <div class="input-tabs">
+                <button class="tab-btn active" onclick="switchTab('upload')">Upload Files</button>
+                <button class="tab-btn" onclick="switchTab('link')">Link</button>
             </div>
 
-            <div>
-                <label>Infill Selection</label>
-                <div class="infill-grid" style="margin-top:10px;">
-                    <button class="btn-select inf-opt" onclick="selectInf(this)">Min.<span>(20)</span></button>
-                    <button class="btn-select inf-opt" onclick="selectInf(this)">More<span>(45)</span></button>
-                    <button class="btn-select inf-opt" onclick="selectInf(this)">Functional<span>(80)</span></button>
-                    <button class="btn-select inf-opt" onclick="selectInf(this)">Solid<span>(100)</span></button>
+            <div id="tab-upload" class="input-area active">
+                <div class="file-upload-wrapper">
+                    <button class="btn-upload-style" id="upload-btn-text">📂 Select Files (Max 5)</button>
+                    <input type="file" id="file-input" multiple accept=".stl" onchange="engine.handleFiles(this.files)">
                 </div>
             </div>
 
-            <div id="result-display" style="display: none; border: 2px solid #1a1a1a; padding: 15px; background: #fff;">
-                <p><strong>Estimated Weight:</strong> <span id="weight">--</span> g</p>
-                <p><strong>Estimated Cost:</strong> ₹ <span id="cost">--</span></p>
-                <p style="font-size: 0.7rem; color: #888;">Actual cost may vary 5-10%</p>
+            <div id="tab-link" class="input-area">
+                <input type="text" id="link-input" placeholder="Paste Thingiverse/Direct Link"
+                    style="width:100%; padding:8px; border:1px solid #ccc;">
+                <button class="btn-select" style="margin-top:5px; width:auto; padding:5px 15px;"
+                    onclick="engine.handleLink()">Fetch Files</button>
             </div>
 
-            <button class="main-action-btn" id="action-btn" onclick="handleMainAction()">CALCULATE</button>
+            <div style="margin-top: 10px;">
+                <label>Infill Strength</label>
+                <div class="infill-grid">
+                    <button class="btn-select inf-opt active" data-inf="20"
+                        onclick="engine.setInfill(20, this)">Min.<span>(20%)</span></button>
+                    <button class="btn-select inf-opt" data-inf="45"
+                        onclick="engine.setInfill(45, this)">More<span>(45%)</span></button>
+                    <button class="btn-select inf-opt" data-inf="80"
+                        onclick="engine.setInfill(80, this)">Func.<span>(80%)</span></button>
+                    <button class="btn-select inf-opt" data-inf="100"
+                        onclick="engine.setInfill(100, this)">Solid<span>(100%)</span></button>
+                </div>
+            </div>
+
+            <div id="file-queue">
+                <p style="text-align:center; color:#ccc; margin-top:20px;">No files added.</p>
+            </div>
+
+            <div id="totals-display"
+                style="display:none; justify-content:space-between; font-weight:bold; padding:10px; background:#eee;">
+                <span>Total:</span>
+                <span id="grand-total">₹ 0</span>
+            </div>
+
+            <button class="main-action-btn" id="action-btn" onclick="engine.triggerAction()">CALCULATE</button>
         </div>
     </div>
 
-    <div id="success-view" style="display:none; text-align:center; padding: 100px 20px; height: calc(100vh - 140px); margin-top: 80px;">
-        <h2>Your order has been placed on logikos.in</h2>
-        <p style="margin: 20px 0; max-width: 600px; margin-left: auto; margin-right: auto;">
-            Thank you for your order. Go back if you didn't try changing the material multiple times. If you did, do join to our community.
-        </p>
-        <button class="btn-select" style="width:auto; padding: 10px 30px;" onclick="goBack()">Back to Estimator</button>
+    <div id="modal">
+        <div class="modal-box">
+            <button onclick="document.getElementById('modal').style.display='none'"
+                style="position: absolute; right: 10px; top: 10px; background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            <h3>Get Your Estimate</h3>
+            <p style="font-size: 0.8rem; margin-bottom: 15px; color: #666;">Enter details to reveal costs.</p>
+            <input type="email" id="u-email" placeholder="Email*"
+                style="width:100%; padding:12px; margin:10px 0; border: 1px solid #ccc;">
+            <input type="text" id="u-city" placeholder="City"
+                style="width:100%; padding:12px; margin:10px 0; border: 1px solid #ccc;">
+            <input type="tel" id="u-phone" placeholder="Phone"
+                style="width:100%; padding:12px; margin:10px 0; border: 1px solid #ccc;">
+            <button class="main-action-btn" onclick="engine.submitUserData()">REVEAL PRICES</button>
+        </div>
     </div>
 
-   <div id="modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.85);">
-    <div class="modal-box" style="background:#fff; margin:10% auto; padding:30px; width:400px; position: relative; border: 3px solid #1a1a1a;">
-        <button onclick="closeModal()" style="position: absolute; right: 10px; top: 10px; background: none; border: none; font-size: 1.5rem; cursor: pointer; font-weight: bold;">&times;</button>
-        
-        <h3>Unlock Your Estimate</h3>
-        <p style="font-size: 0.8rem; margin-bottom: 15px; color: #666;">Enter details to view cost and weight.</p>
-        
-        <input type="email" id="u-email" placeholder="Email (Mandatory)*" style="width:100%; padding:12px; margin:10px 0; border: 1px solid #ccc;">
-        <input type="text" id="u-city" placeholder="City" style="width:100%; padding:12px; margin:10px 0; border: 1px solid #ccc;">
-        <input type="tel" id="u-phone" placeholder="Phone" style="width:100%; padding:12px; margin:10px 0; border: 1px solid #ccc;">
-        
-        <button class="main-action-btn" id="modal-submit-btn" onclick="submitModal()">SUBMIT & REVEAL</button>
-    </div>
-</div>
-
-    <footer id="global-footer"></footer>
     <script src="../js/navigation.js"></script>
+    <script src="../js/calculator_engine.js"></script>
 
     <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxs80wPG8i2cwrjIM20o_asd6D4kV-GQ0c9Ggb4dWqee7VesYjnE1dU7aoKk92vvbrt/exec";
-    let isCalculated = false;
-    let currentFileName = "N/A";
-
-    function selectMat(btn) {
-        document.querySelectorAll('.mat-opt').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        onInputChanged();
-    }
-
-    function selectInf(btn) {
-        document.querySelectorAll('.inf-opt').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        onInputChanged();
-    }
-
-    function handleUpload(input) {
-        if(input.files[0]) {
-            currentFileName = input.files[0].name;
-            document.getElementById('v-status').innerHTML = `
-                <div style="background: #1a1a1a; color: white; padding: 20px; border-radius: 50%; width: 80px; height: 80px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center;">3D</div>
-                <strong>${currentFileName}</strong><br>Ready to Calculate
-            `;
-            onInputChanged();
-        }
-    }
-
-    function onInputChanged() {
-        isCalculated = false;
-        document.getElementById('action-btn').innerText = "CALCULATE";
-        document.getElementById('result-display').style.display = "none";
-    }
-
-    function closeModal() {
-        document.getElementById('modal').style.display = 'none';
-    }
-
-    async function performCalculation() {
-        const weight = (Math.random() * 150 + 20).toFixed(1);
-        const cost = (Math.random() * 800 + 150).toFixed(2);
-        
-        document.getElementById('weight').innerText = weight;
-        document.getElementById('cost').innerText = cost;
-        document.getElementById('result-display').style.display = 'block';
-        document.getElementById('action-btn').innerText = "CHECKOUT";
-        isCalculated = true;
-
-        // SEND DATA TO GOOGLE SHEET
-        const payload = {
-            action: "SUBMIT_LEAD",
-            email: sessionStorage.getItem('userEmail'),
-            city: sessionStorage.getItem('userCity'),
-            phone: sessionStorage.getItem('userPhone'),
-            file_name: currentFileName,
-            material: document.querySelector('.mat-opt.active')?.innerText || "PLA",
-            infill: document.querySelector('.inf-opt.active')?.innerText.split('(')[0] || "Standard",
-            weight: weight,
-            cost: cost,
-            admin_id: sessionStorage.getItem('userId') || "Logikos"
-        };
-
-        try {
-            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            console.log("Lead sent successfully");
-        } catch (e) { console.error("Lead log failed", e); }
-    }
-
-    function handleMainAction() {
-        if (!isCalculated) {
-            if (sessionStorage.getItem('userEmail')) {
-                performCalculation();
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.input-area').forEach(d => d.classList.remove('active'));
+            if (tab === 'upload') {
+                document.querySelector('.tab-btn:first-child').classList.add('active');
+                document.getElementById('tab-upload').classList.add('active');
             } else {
-                document.getElementById('modal').style.display = 'block';
+                document.querySelector('.tab-btn:last-child').classList.add('active');
+                document.getElementById('tab-link').classList.add('active');
             }
-        } else {
-            document.getElementById('calculator-view').style.display = 'none';
-            document.getElementById('success-view').style.display = 'block';
         }
-    }
-
-    function submitModal() {
-        const email = document.getElementById('u-email').value;
-        const city = document.getElementById('u-city').value;
-        const phone = document.getElementById('u-phone').value;
-
-        if (!email.includes('@')) { alert("Valid email is required."); return; }
-        
-        // Disable button to prevent double clicks
-        document.getElementById('modal-submit-btn').innerText = "UPDATING...";
-        document.getElementById('modal-submit-btn').disabled = true;
-
-        sessionStorage.setItem('userEmail', email);
-        sessionStorage.setItem('userCity', city);
-        sessionStorage.setItem('userPhone', phone);
-        
-        document.getElementById('modal').style.display = 'none';
-        performCalculation();
-    }
-
-    function goBack() {
-        document.getElementById('success-view').style.display = 'none';
-        document.getElementById('calculator-view').style.display = 'grid';
-    }
-</script>
+    </script>
 </body>
+
 </html>
