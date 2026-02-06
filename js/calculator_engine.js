@@ -130,14 +130,12 @@ class CalculatorEngine {
         const url = urlInput.value.trim();
         if (!url) return alert("Please paste a Thingiverse link.");
 
-        // UI Feedback
         const btn = document.querySelector('#tab-link button');
         const originalText = btn.innerText;
         btn.innerText = "⏳ Fetching...";
         btn.disabled = true;
 
         try {
-            // 1. Call Python Cloud Slicer
             const response = await fetch(CLOUD_CONFIG.SLICER_URL, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -145,7 +143,6 @@ class CalculatorEngine {
             });
 
             if (!response.ok) throw new Error("Could not fetch link data");
-
             const data = await response.json();
             
             if (data.files.length === 0) {
@@ -153,42 +150,32 @@ class CalculatorEngine {
                 return;
             }
 
-            // 2. Add files to the list
             data.files.forEach(f => {
-                // Check duplicate
                 if (this.files.some(existing => existing.name === f.filename)) return;
 
                 this.files.push({
-                    fileObject: null, // No raw file for links
+                    fileObject: null,
                     name: f.filename,
-                    data: null,       // No 3D Data (Visualizer skipped)
+                    data: null,
                     status: 'Cloud',
                     volume: f.metrics.volume_cm3,
-                    isPrecise: true
+                    isPrecise: true,
+                    // Store cost params but don't show yet
+                    weight: 0, 
+                    cost: 0
                 });
             });
 
-            this.updateQueueUI();
-            
-            // 3. Auto-Calculate Price (Since we already have the volume)
-            this.hasCalculated = true;
-            this.reCalculateCosts(); 
-
-            // 4. Log to Google Sheet (Links Tab)
-            // We use the ID returned by Python (project_id)
+            // LOG LINK (But don't calculate price yet)
             const userId = this.currentUserID || "GUEST";
             fetch(CLOUD_CONFIG.GATEKEEPER_URL, {
                  method: 'POST',
                  headers: { "Content-Type": "text/plain;charset=utf-8" },
-                 body: JSON.stringify({ 
-                     action: 'log_link', 
-                     user_id: userId, 
-                     link: url,
-                     db_id: data.project_id || "N/A"
-                 })
+                 body: JSON.stringify({ action: 'log_link', user_id: userId, link: url, db_id: data.project_id || "N/A" })
             });
 
-            urlInput.value = ""; // Clear input
+            urlInput.value = ""; 
+            this.updateQueueUI(); // Adds to list, but price remains hidden until "CALCULATE" is clicked
 
         } catch (e) {
             console.error(e);
@@ -555,6 +542,21 @@ class CalculatorEngine {
         this.hasCalculated = true;
         this.reCalculateCosts();
         document.getElementById('action-btn').innerText = "CHECKOUT";
+    }
+
+   clearAll() {
+        if(!confirm("Remove all files?")) return;
+        this.files = [];
+        this.currentFileIndex = -1;
+        this.hasCalculated = false;
+        
+        if(this.currentMesh) {
+            this.scene.remove(this.currentMesh);
+            this.currentMesh = null;
+        }
+        
+        this.updateQueueUI();
+        document.getElementById('upload-btn-text').innerText = "📂 Select Files";
     }
 
     reCalculateCosts() {
