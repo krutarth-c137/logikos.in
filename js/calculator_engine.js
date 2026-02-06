@@ -100,21 +100,25 @@ class CalculatorEngine {
                 return;
             }
 
+            // DUPLICATE CHECK
+            if (this.files.some(f => f.name === file.name)) {
+                alert(`File "${file.name}" is already added.`);
+                return; // Skip this file
+            }
+
             const reader = new FileReader();
             reader.onload = (e) => {
                 this.files.push({
-                    fileObject: file, // Keep raw file for upload
+                    fileObject: file,
                     name: file.name,
                     data: e.target.result,
                     status: 'Pending',
-                    volume: 0, // Will be filled by ThreeJS initially, then Python
-                    isPrecise: false // Track if volume is from Python
+                    volume: 0, 
+                    isPrecise: false
                 });
 
-                // If first file, render it immediately
                 if (this.files.length === 1) this.viewFile(0);
                 this.updateQueueUI();
-
                 document.getElementById('upload-btn-text').innerText = "➕ Add Another File";
             };
             reader.readAsArrayBuffer(file);
@@ -236,12 +240,24 @@ class CalculatorEngine {
         const queueDiv = document.getElementById('file-queue');
         queueDiv.innerHTML = "";
 
+        if (this.files.length === 0) {
+             queueDiv.innerHTML = '<p style="text-align:center; color:#ccc; margin-top:20px;">No files added.</p>';
+             document.getElementById('totals-display').style.display = 'none';
+             document.getElementById('upload-btn-text').innerText = "📂 Select Files";
+             // Clear viewer if empty
+             if(this.currentMesh) {
+                 this.scene.remove(this.currentMesh);
+                 this.currentMesh = null;
+             }
+             return;
+        }
+
         let grandTotal = 0;
 
         this.files.forEach((f, i) => {
             const isActive = i === this.currentFileIndex ? 'active-view' : '';
             let details = "";
-            let statusIcon = f.isPrecise ? "✅" : "⚠️"; // Checkmark if Python data used
+            let statusIcon = f.isPrecise ? "✅" : "⚠️"; 
 
             if (this.hasCalculated) {
                 details = `
@@ -256,13 +272,24 @@ class CalculatorEngine {
                 details = `<div class="queue-meta"><span>Ready to calc</span></div>`;
             }
 
+            // SVG Icons for Eye (View) and Trash (Delete)
+            const eyeIcon = `<svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>`;
+            const trashIcon = `<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
+
             queueDiv.innerHTML += `
                 <div class="queue-item ${isActive}" onclick="engine.viewFile(${i})">
                     <div style="flex-grow:1;">
                         <strong>${i + 1}. ${f.name}</strong>
                         ${details}
                     </div>
-                    ${isActive ? '<span style="font-size:1.2rem;">👁️</span>' : ''}
+                    <div style="display:flex; gap:5px;">
+                        <button class="icon-btn" title="View" onclick="engine.viewFile(${i}); event.stopPropagation();">
+                            ${eyeIcon}
+                        </button>
+                        <button class="icon-btn" title="Remove" onclick="engine.deleteFile(${i}); event.stopPropagation();">
+                            ${trashIcon}
+                        </button>
+                    </div>
                 </div>
             `;
         });
@@ -270,6 +297,31 @@ class CalculatorEngine {
         if (this.hasCalculated) {
             document.getElementById('totals-display').style.display = 'flex';
             document.getElementById('grand-total').innerText = `₹ ${Math.ceil(grandTotal + CONFIG.RATES.base_fee)}`;
+        }
+    }
+   
+   deleteFile(index) {
+        if (index < 0 || index >= this.files.length) return;
+        
+        // Remove file
+        this.files.splice(index, 1);
+        
+        // Reset view if we deleted the currently viewed file
+        if (this.files.length === 0) {
+            this.currentFileIndex = -1;
+            // Clear totals if list is empty
+            this.hasCalculated = false;
+        } else if (index === this.currentFileIndex) {
+            this.viewFile(0); // Jump to first file
+        } else if (index < this.currentFileIndex) {
+            this.currentFileIndex--; // Shift index down
+        }
+
+        // If we have calculated results, we should probably update the total cost immediately
+        if (this.hasCalculated) {
+            this.reCalculateCosts();
+        } else {
+            this.updateQueueUI();
         }
     }
 
