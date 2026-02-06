@@ -13,7 +13,7 @@ const CONFIG = {
     RATES: { // INR per gram
         "PLA": 8.0, "ABS": 9.0, "PETG": 8.5, "Nylon": 15.0,
         "TPU": 12.0, "Resin": 18.0, "PC": 16.0, "CF": 20.0,
-        "base_fee": 150 // Setup fee per order
+        "base_fee": 0 // Setup fee per order
     }
 };
 
