@@ -125,10 +125,78 @@ class CalculatorEngine {
         });
     }
 
-    handleLink() {
-        const url = document.getElementById('link-input').value;
-        if (!url) return;
-        alert("Link processing requires live Backend. Please upload STLs for now.");
+    async handleLink() {
+        const urlInput = document.getElementById('link-input');
+        const url = urlInput.value.trim();
+        if (!url) return alert("Please paste a Thingiverse link.");
+
+        // UI Feedback
+        const btn = document.querySelector('#tab-link button');
+        const originalText = btn.innerText;
+        btn.innerText = "⏳ Fetching...";
+        btn.disabled = true;
+
+        try {
+            // 1. Call Python Cloud Slicer
+            const response = await fetch(CLOUD_CONFIG.SLICER_URL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ mode: 'link', input_data: url })
+            });
+
+            if (!response.ok) throw new Error("Could not fetch link data");
+
+            const data = await response.json();
+            
+            if (data.files.length === 0) {
+                alert("No STL files found in this link.");
+                return;
+            }
+
+            // 2. Add files to the list
+            data.files.forEach(f => {
+                // Check duplicate
+                if (this.files.some(existing => existing.name === f.filename)) return;
+
+                this.files.push({
+                    fileObject: null, // No raw file for links
+                    name: f.filename,
+                    data: null,       // No 3D Data (Visualizer skipped)
+                    status: 'Cloud',
+                    volume: f.metrics.volume_cm3,
+                    isPrecise: true
+                });
+            });
+
+            this.updateQueueUI();
+            
+            // 3. Auto-Calculate Price (Since we already have the volume)
+            this.hasCalculated = true;
+            this.reCalculateCosts(); 
+
+            // 4. Log to Google Sheet (Links Tab)
+            // We use the ID returned by Python (project_id)
+            const userId = this.currentUserID || "GUEST";
+            fetch(CLOUD_CONFIG.GATEKEEPER_URL, {
+                 method: 'POST',
+                 headers: { "Content-Type": "text/plain;charset=utf-8" },
+                 body: JSON.stringify({ 
+                     action: 'log_link', 
+                     user_id: userId, 
+                     link: url,
+                     db_id: data.project_id || "N/A"
+                 })
+            });
+
+            urlInput.value = ""; // Clear input
+
+        } catch (e) {
+            console.error(e);
+            alert("Error: " + e.message);
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
     }
 
     // --- RENDERING ---
@@ -141,9 +209,18 @@ class CalculatorEngine {
             this.scene.remove(this.currentMesh);
             this.currentMesh.geometry.dispose();
             this.currentMesh.material.dispose();
+           this.currentMesh = null;
         }
 
         const file = this.files[index];
+       // --- SAFETY CHECK FOR LINK FILES ---
+        if (!file.data) {
+            // This is a cloud link file, we cannot view it in 3D
+            document.getElementById('view-counter').innerText = `${index + 1} / ${this.files.length} (No Preview)`;
+            this.updateQueueUI();
+            return; 
+        }
+        // -----------------------------------
         const loader = new THREE.STLLoader();
         const geometry = loader.parse(file.data);
 
