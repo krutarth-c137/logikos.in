@@ -14,19 +14,20 @@
 
     <style>
         /* No-Scroll Layout */
-        body,
-        html {
+        body, html {
             height: 100%;
             overflow: hidden;
+            margin: 0;
         }
 
         .calc-wrapper {
             display: grid;
             grid-template-columns: 1.4fr 1fr;
             gap: 20px;
-            height: calc(100vh - 100px);
+            height: calc(100vh - 90px); /* Adjusted for header */
             margin-top: 80px;
-            padding: 0 40px;
+            padding: 0 40px 20px 40px;
+            box-sizing: border-box;
         }
 
         /* LEFT PANEL */
@@ -35,12 +36,13 @@
             flex-direction: column;
             gap: 10px;
             height: 100%;
+            overflow: hidden;
         }
 
         .material-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
+            gap: 6px;
             flex-shrink: 0;
         }
 
@@ -53,6 +55,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            border-radius: 4px;
         }
 
         /* Viewer Overlays */
@@ -62,7 +65,7 @@
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 10px;
+            gap: 8px;
             z-index: 10;
         }
 
@@ -70,25 +73,24 @@
             background: rgba(26, 26, 26, 0.8);
             color: white;
             border: none;
-            padding: 5px 10px;
+            padding: 4px 8px;
             cursor: pointer;
-            font-size: 0.8rem;
-            border-radius: 4px;
+            font-size: 0.75rem;
+            border-radius: 3px;
         }
 
-        .viewer-btn:hover {
-            background: #1a1a1a;
-        }
+        .viewer-btn:hover { background: #1a1a1a; }
 
         .file-counter {
             position: absolute;
             top: 10px;
             right: 10px;
             background: rgba(255, 255, 255, 0.9);
-            padding: 5px 10px;
+            padding: 4px 8px;
             font-size: 0.8rem;
             border: 1px solid #ccc;
             z-index: 10;
+            border-radius: 3px;
         }
 
         .viewer-nav {
@@ -97,30 +99,29 @@
             transform: translateY(-50%);
             background: rgba(255, 255, 255, 0.8);
             border: 1px solid #ccc;
-            padding: 10px;
+            padding: 8px;
             cursor: pointer;
             font-weight: bold;
             z-index: 10;
-            user-select: none;
         }
+        .nav-prev { left: 10px; }
+        .nav-next { right: 10px; }
 
-        .nav-prev {
-            left: 10px;
-        }
-
-        .nav-next {
-            right: 10px;
-        }
-
-        /* RIGHT PANEL */
+        /* RIGHT PANEL - FLEXBOX FIX */
         .right-panel {
             display: flex;
-            flex-direction: column;
-            gap: 15px;
+            flex-direction: column; /* Stacks children vertically */
+            gap: 10px;
             padding: 20px;
             background: #fff;
             border-left: 1px solid #eee;
             height: 100%;
+            overflow: hidden; /* Prevents container itself from scrolling */
+        }
+
+        /* Fixed Header Section */
+        .panel-header {
+            flex-shrink: 0; /* Prevents shrinking */
         }
 
         /* Tabs */
@@ -132,12 +133,13 @@
 
         .tab-btn {
             flex: 1;
-            padding: 10px;
+            padding: 8px;
             background: none;
             border: none;
             cursor: pointer;
             font-weight: bold;
             color: #aaa;
+            font-size: 0.9rem;
         }
 
         .tab-btn.active {
@@ -145,15 +147,9 @@
             border-bottom: 2px solid #1a1a1a;
         }
 
-        .input-area {
-            display: none;
-        }
+        .input-area { display: none; }
+        .input-area.active { display: block; }
 
-        .input-area.active {
-            display: block;
-        }
-
-        /* NEW: Custom File Upload Button Styling */
         .file-upload-wrapper {
             position: relative;
             overflow: hidden;
@@ -161,135 +157,133 @@
             width: 100%;
         }
 
-        /* Hide the actual input but keep it clickable */
         .file-upload-wrapper input[type=file] {
             font-size: 100px;
             position: absolute;
-            left: 0;
-            top: 0;
-            opacity: 0;
+            left: 0; top: 0; opacity: 0;
             cursor: pointer;
         }
 
-        /* The visible button */
         .btn-upload-style {
             background: white;
             border: 2px dashed #1a1a1a;
             color: #1a1a1a;
-            padding: 15px;
+            padding: 12px;
             text-align: center;
             font-weight: bold;
             width: 100%;
             cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .btn-upload-style:hover {
-            background: #f9f9f9;
-            border-color: #007bff;
-            color: #007bff;
-        }
-
-        /* Queue & Results */
-        #file-queue {
-            flex-grow: 1;
-            overflow-y: auto;
-            border: 1px solid #eee;
-            padding: 10px;
-            background: #f9f9f9;
-            margin-bottom: 10px;
-        }
-
-        .queue-item {
-            background: white;
-            padding: 10px;
-            margin-bottom: 8px;
-            border: 1px solid #ddd;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             font-size: 0.9rem;
-            cursor: pointer;
-        }
-
-        .queue-item:hover {
-            background: #f0f8ff;
-        }
-
-        .queue-item.active-view {
-            border-left: 4px solid #1a1a1a;
-            background: #fff;
-        }
-
-        .queue-meta {
-            display: flex;
-            gap: 15px;
-            font-size: 0.8rem;
-            color: #666;
-            margin-top: 5px;
-        }
-
-        /* Standard Buttons */
-        .btn-select {
-            padding: 10px 5px;
-            border: 1px solid #1a1a1a;
-            background: #fff;
-            cursor: pointer;
-            font-size: 0.85rem;
-            text-align: center;
-            width: 100%;
-            transition: 0.2s;
-        }
-
-        .btn-select.active {
-            background: #1a1a1a;
-            color: #fff;
-        }
-
-        .btn-select span {
-            display: block;
-            font-size: 0.75rem;
-            color: #666;
-        }
-
-        .btn-select.active span {
-            color: #ccc;
-        }
-
-        .btn-joke {
-            border: 1px dashed #ff4444;
-            color: #ff4444;
-            cursor: not-allowed;
         }
 
         .infill-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        /* SCROLLABLE QUEUE AREA */
+        #file-queue {
+            flex-grow: 1; /* Takes up all available space */
+            overflow-y: auto; /* Enables internal scroll */
+            min-height: 0; /* Crucial for flex scrolling */
+            border: 1px solid #eee;
+            padding: 8px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .queue-item {
+            background: white;
+            padding: 8px;
+            margin-bottom: 6px;
+            border: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .queue-item:hover { background: #f0f8ff; }
+        .queue-item.active-view { border-left: 4px solid #1a1a1a; background: #fff; }
+
+        .queue-meta {
+            display: flex;
             gap: 10px;
-            margin-top: 10px;
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 3px;
+        }
+
+        /* Icon Styling */
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            opacity: 0.6;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+        }
+        .icon-btn:hover { opacity: 1; }
+        .icon-btn svg { width: 16px; height: 16px; fill: #1a1a1a; }
+
+        /* FIXED FOOTER SECTION */
+        .panel-footer {
+            flex-shrink: 0; /* Prevents shrinking */
+            margin-top: auto; /* Pushes to bottom if list is short */
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        #totals-display {
+            display: none;
+            justify-content: space-between;
+            font-weight: bold;
+            padding: 10px;
+            background: #eee;
+            margin-bottom: 10px;
+            border-radius: 4px;
         }
 
         .main-action-btn {
             background: #1a1a1a;
             color: white;
-            padding: 18px;
+            padding: 15px;
             border: none;
             font-weight: bold;
             cursor: pointer;
             width: 100%;
-            font-size: 1.1rem;
-            flex-shrink: 0;
+            font-size: 1rem;
+            border-radius: 4px;
         }
+
+        /* Standard Buttons */
+        .btn-select {
+            padding: 8px 4px;
+            border: 1px solid #1a1a1a;
+            background: #fff;
+            cursor: pointer;
+            font-size: 0.8rem;
+            text-align: center;
+            width: 100%;
+            border-radius: 3px;
+        }
+        .btn-select.active { background: #1a1a1a; color: #fff; }
+        .btn-select span { display: block; font-size: 0.7rem; color: #666; }
+        .btn-select.active span { color: #ccc; }
+        .btn-joke { border: 1px dashed #ff4444; color: #ff4444; cursor: not-allowed; }
 
         /* Modal */
         #modal {
             display: none;
             position: fixed;
             z-index: 2000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.8);
         }
 
@@ -310,18 +304,14 @@
 
     <div class="calc-wrapper" id="calculator-view">
         <div class="left-panel">
-            <h3>Select Material</h3>
+            <h3 style="margin:0; font-size:1rem;">Select Material</h3>
             <div class="material-grid">
-                <button class="btn-select mat-opt active" data-mat="PLA"
-                    onclick="engine.setMaterial('PLA', this)">PLA</button>
+                <button class="btn-select mat-opt active" data-mat="PLA" onclick="engine.setMaterial('PLA', this)">PLA</button>
                 <button class="btn-select mat-opt" data-mat="ABS" onclick="engine.setMaterial('ABS', this)">ABS</button>
-                <button class="btn-select mat-opt" data-mat="PETG"
-                    onclick="engine.setMaterial('PETG', this)">PETG</button>
-                <button class="btn-select mat-opt" data-mat="Nylon"
-                    onclick="engine.setMaterial('Nylon', this)">Nylon</button>
+                <button class="btn-select mat-opt" data-mat="PETG" onclick="engine.setMaterial('PETG', this)">PETG</button>
+                <button class="btn-select mat-opt" data-mat="Nylon" onclick="engine.setMaterial('Nylon', this)">Nylon</button>
                 <button class="btn-select mat-opt" data-mat="TPU" onclick="engine.setMaterial('TPU', this)">TPU</button>
-                <button class="btn-select mat-opt" data-mat="Resin"
-                    onclick="engine.setMaterial('Resin', this)">Resin</button>
+                <button class="btn-select mat-opt" data-mat="Resin" onclick="engine.setMaterial('Resin', this)">Resin</button>
                 <button class="btn-select mat-opt" data-mat="PC" onclick="engine.setMaterial('PC', this)">PC</button>
                 <button class="btn-select mat-opt" data-mat="CF" onclick="engine.setMaterial('CF', this)">CF</button>
                 <button class="btn-select btn-joke">Unobtanium</button>
@@ -343,51 +333,53 @@
         </div>
 
         <div class="right-panel">
-            <div class="input-tabs">
-                <button class="tab-btn active" onclick="switchTab('upload')">Upload Files</button>
-                <button class="tab-btn" onclick="switchTab('link')">Link</button>
-            </div>
-
-            <div id="tab-upload" class="input-area active">
-                <div class="file-upload-wrapper">
-                    <button class="btn-upload-style" id="upload-btn-text">📂 Select Files (Max 5)</button>
-                    <input type="file" id="file-input" multiple accept=".stl" onchange="engine.handleFiles(this.files)">
+            
+            <div class="panel-header">
+                <div class="input-tabs">
+                    <button class="tab-btn active" onclick="switchTab('upload')">Upload Files</button>
+                    <button class="tab-btn" onclick="switchTab('link')">Link</button>
                 </div>
-            </div>
 
-            <div id="tab-link" class="input-area">
-                <input type="text" id="link-input" placeholder="Paste Thingiverse/Direct Link"
-                    style="width:100%; padding:8px; border:1px solid #ccc;">
-                <button class="btn-select" style="margin-top:5px; width:auto; padding:5px 15px;"
-                    onclick="engine.handleLink()">Fetch Files</button>
-            </div>
-
-            <div style="margin-top: 10px;">
-                <label>Infill Strength</label>
-                <div class="infill-grid">
-                    <button class="btn-select inf-opt active" data-inf="20"
-                        onclick="engine.setInfill(20, this)">Min.<span>(20%)</span></button>
-                    <button class="btn-select inf-opt" data-inf="45"
-                        onclick="engine.setInfill(45, this)">More<span>(45%)</span></button>
-                    <button class="btn-select inf-opt" data-inf="80"
-                        onclick="engine.setInfill(80, this)">Func.<span>(80%)</span></button>
-                    <button class="btn-select inf-opt" data-inf="100"
-                        onclick="engine.setInfill(100, this)">Solid<span>(100%)</span></button>
+                <div id="tab-upload" class="input-area active">
+                    <div class="file-upload-wrapper">
+                        <button class="btn-upload-style" id="upload-btn-text">📂 Select Files (Max 5)</button>
+                        <input type="file" id="file-input" multiple accept=".stl" onchange="engine.handleFiles(this.files)">
+                    </div>
                 </div>
+
+                <div id="tab-link" class="input-area">
+                    <input type="text" id="link-input" placeholder="Paste Thingiverse/Direct Link"
+                        style="width:100%; padding:8px; border:1px solid #ccc; box-sizing: border-box;">
+                    <button class="btn-select" style="margin-top:5px; width:auto; padding:5px 15px;"
+                        onclick="engine.handleLink()">Fetch Files</button>
+                </div>
+
+                <div style="margin-top: 10px;">
+                    <label style="font-size:0.9rem; font-weight:bold;">Infill Strength</label>
+                    <div class="infill-grid">
+                        <button class="btn-select inf-opt active" data-inf="20" onclick="engine.setInfill(20, this)">Min.<span>(20%)</span></button>
+                        <button class="btn-select inf-opt" data-inf="45" onclick="engine.setInfill(45, this)">More<span>(45%)</span></button>
+                        <button class="btn-select inf-opt" data-inf="80" onclick="engine.setInfill(80, this)">Func.<span>(80%)</span></button>
+                        <button class="btn-select inf-opt" data-inf="100" onclick="engine.setInfill(100, this)">Solid<span>(100%)</span></button>
+                    </div>
+                </div>
+                
+                <p style="font-size:0.8rem; margin:10px 0 5px 0; color:#888;">File Queue:</p>
             </div>
 
             <div id="file-queue">
                 <p style="text-align:center; color:#ccc; margin-top:20px;">No files added.</p>
             </div>
 
-            <div id="totals-display"
-                style="display:none; justify-content:space-between; font-weight:bold; padding:10px; background:#eee;">
-                <span>Total:</span>
-                <span id="grand-total">₹ 0</span>
-            </div>
+            <div class="panel-footer">
+                <div id="totals-display">
+                    <span>Total:</span>
+                    <span id="grand-total">₹ 0</span>
+                </div>
 
-            <p id="status-msg" style="text-align:center; font-size:0.9rem; margin:10px 0; height:20px; font-weight:bold;"></p>
-            <button class="main-action-btn" id="action-btn" onclick="engine.triggerAction()">CALCULATE</button>
+                <p id="status-msg" style="text-align:center; font-size:0.8rem; margin:5px 0; height:15px; font-weight:bold;"></p>
+                <button class="main-action-btn" id="action-btn" onclick="engine.triggerAction()">CALCULATE</button>
+            </div>
         </div>
     </div>
 
@@ -397,12 +389,9 @@
                 style="position: absolute; right: 10px; top: 10px; background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
             <h3>Get Your Estimate</h3>
             <p style="font-size: 0.8rem; margin-bottom: 15px; color: #666;">Enter details to reveal costs.</p>
-            <input type="email" id="u-email" placeholder="Email*"
-                style="width:100%; padding:12px; margin:10px 0; border: 1px solid #ccc;">
-            <input type="text" id="u-city" placeholder="City"
-                style="width:100%; padding:12px; margin:10px 0; border: 1px solid #ccc;">
-            <input type="tel" id="u-phone" placeholder="Phone"
-                style="width:100%; padding:12px; margin:10px 0; border: 1px solid #ccc;">
+            <input type="email" id="u-email" placeholder="Email*" style="width:100%; padding:12px; margin:10px 0; border: 1px solid #ccc;">
+            <input type="text" id="u-city" placeholder="City" style="width:100%; padding:12px; margin:10px 0; border: 1px solid #ccc;">
+            <input type="tel" id="u-phone" placeholder="Phone" style="width:100%; padding:12px; margin:10px 0; border: 1px solid #ccc;">
             <button class="main-action-btn" onclick="engine.submitUserData()">REVEAL PRICES</button>
         </div>
     </div>
@@ -424,5 +413,4 @@
         }
     </script>
 </body>
-
 </html>
