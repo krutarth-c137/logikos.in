@@ -20,7 +20,7 @@ const CONFIG = {
 // --- CLOUD ENDPOINTS (PASTE YOUR URLs HERE) ---
 const CLOUD_CONFIG = {
     // 1. The Google Sheet Web App URL (Gatekeeper)
-    GATEKEEPER_URL: 'YOUR_GOOGLE_SCRIPT_URL_HERE', 
+    GATEKEEPER_URL: 'https://script.google.com/macros/s/AKfycbzgtd4pTgIHMp-AJz4AGCRGFMAIRye0NSnMbHULib8ULNXmTrbSChNK2O4MYd0RZxCf/exec', 
     
     // 2. The Python Cloud Function URL (Slicer)
     SLICER_URL: 'https://asia-south1-logikos-website-d56b0.cloudfunctions.net/slicer_api'
@@ -309,34 +309,51 @@ class CalculatorEngine {
     }
 
     async startQuoteProcess(email) {
-        const statusMsg = document.getElementById('status-msg'); // Ensure you add this <p> in HTML
+        const statusMsg = document.getElementById('status-msg');
         if(statusMsg) {
             statusMsg.innerText = "⏳ Verifying Quota...";
             statusMsg.style.color = "blue";
         }
 
+        // Retrieve User Data
+        const city = sessionStorage.getItem('userCity') || "N/A";
+        const phone = sessionStorage.getItem('userPhone') || "N/A";
+
         try {
-            // 1. Call Google Sheets Gatekeeper
+            // 1. CHECK QUOTA & REGISTER USER
+            // We use 'text/plain' to bypass Google CORS restrictions
             const response = await fetch(CLOUD_CONFIG.GATEKEEPER_URL, {
                 method: "POST",
-                body: JSON.stringify({ action: "check_quota", email: email })
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ 
+                    action: "check_quota", 
+                    email: email, 
+                    city: city, 
+                    phone: phone 
+                })
             });
+
             const data = await response.json();
 
-            if (data.status === "allowed") {
+            if (data.status === "allowed" || data.status === "existing" || data.status === "new") {
+                
+                // PRE-FLIGHT LIMIT CHECK
+                // If adding these files exceeds the limit (and user is not a Member)
+                const projectedCount = data.current_count + this.files.length;
+                if (data.user_type !== "Member" && projectedCount > 10) {
+                     alert(`❌ Upload limit reached. You have used ${data.current_count}/10 calculations. adding ${this.files.length} more would exceed the limit.`);
+                     if(statusMsg) statusMsg.innerText = "❌ Limit Reached";
+                     return;
+                }
+
                 if(statusMsg) {
                     statusMsg.innerText = "✅ Authorized! Uploading to Slicer...";
                     statusMsg.style.color = "green";
                 }
                 
-                // 2. Proceed to Python Upload
-                this.uploadFilesToSlicer(email);
-
-                // 3. Increment Usage in Sheet (Fire and Forget)
-                fetch(CLOUD_CONFIG.GATEKEEPER_URL, {
-                    method: "POST",
-                    body: JSON.stringify({ action: "increment_usage", email: email })
-                });
+                // 2. PROCEED TO PYTHON UPLOAD
+                // We pass the User ID so we can increment the count later
+                this.uploadFilesToSlicer(email, data.user_id);
 
             } else {
                 alert(`❌ ${data.message}`);
@@ -345,12 +362,11 @@ class CalculatorEngine {
         } catch (error) {
             console.error("Gatekeeper Error:", error);
             alert("Connection failed. Using Offline Estimation mode.");
-            // Fallback: Calculate using local ThreeJS data if server fails
             this.performLocalCalculation(); 
         }
     }
 
-    async uploadFilesToSlicer(email) {
+    async uploadFilesToSlicer(email, userId) {
         const formData = new FormData();
         
         // Append raw file objects
@@ -370,17 +386,30 @@ class CalculatorEngine {
             const data = await response.json();
             console.log("Slicer Data:", data);
 
-            // UPDATE VOLUMES WITH PRECISE DATA
+            // 1. UPDATE VOLUMES WITH PRECISE DATA
             data.files.forEach(serverFile => {
-                // Find matching local file
                 const localFile = this.files.find(f => f.name === serverFile.filename);
                 if (localFile) {
-                    localFile.volume = serverFile.metrics.volume_cm3; // Overwrite with precise data
+                    localFile.volume = serverFile.metrics.volume_cm3;
                     localFile.isPrecise = true;
                 }
             });
 
-            // Trigger Calculation with new data
+            // 2. INCREMENT USAGE COUNT (Since upload was successful)
+            // Fire and forget - we don't need to wait for this to finish
+            if (userId) {
+                fetch(CLOUD_CONFIG.GATEKEEPER_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ 
+                        action: "increment_usage", 
+                        user_id: userId,
+                        file_count: this.files.length 
+                    })
+                });
+            }
+
+            // 3. TRIGGER FINAL PRICING
             this.performLocalCalculation(); 
             
             const statusMsg = document.getElementById('status-msg');
