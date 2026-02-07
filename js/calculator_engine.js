@@ -456,7 +456,7 @@ class CalculatorEngine {
                 // PRE-FLIGHT LIMIT CHECK
                 // If adding these files exceeds the limit (and user is not a Member)
                 const projectedCount = data.current_count + this.files.length;
-                if (data.user_type !== "Member" && projectedCount > 10) {
+                if (data.user_type !== "Member" && projectedCount > 100) {
                      alert(`❌ Upload limit reached. You have used ${data.current_count}/10 calculations. adding ${this.files.length} more would exceed the limit.`);
                      if(statusMsg) statusMsg.innerText = "❌ Limit Reached";
                      return;
